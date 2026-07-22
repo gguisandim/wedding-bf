@@ -1,14 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import {
+  NextResponse,
+  type NextRequest,
+} from "next/server";
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+) {
   let response = NextResponse.next({
     request,
   });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env
+      .NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {
@@ -16,39 +22,54 @@ export async function updateSession(request: NextRequest) {
         },
 
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
+          cookiesToSet.forEach(
+            ({ name, value }) => {
+              request.cookies.set(name, value);
+            },
+          );
 
           response = NextResponse.next({
             request,
           });
 
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          cookiesToSet.forEach(
+            ({ name, value, options }) => {
+              response.cookies.set(
+                name,
+                value,
+                options,
+              );
+            },
+          );
         },
       },
-    }
+    },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } =
+    await supabase.auth.getClaims();
 
-  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  const isDashboard = request.nextUrl.pathname.startsWith("/painel");
-
-  if (!user && isDashboard) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  if (error) {
+    console.error(
+      "Erro ao verificar sessão:",
+      error,
+    );
   }
 
-  if (user && isLoginPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/painel";
-    return NextResponse.redirect(url);
+  const isPanelRoute =
+    request.nextUrl.pathname.startsWith(
+      "/painel",
+    );
+
+  if (!data?.claims && isPanelRoute) {
+    const redirectUrl =
+      request.nextUrl.clone();
+
+    redirectUrl.pathname = "/login";
+
+    return NextResponse.redirect(
+      redirectUrl,
+    );
   }
 
   return response;
