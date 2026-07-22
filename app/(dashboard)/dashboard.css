@@ -17,7 +17,117 @@
 }
 
 .layout-casamento {
+  display: flex;
   min-height: 100vh;
   background: var(--dashboard-bg);
   color: var(--dashboard-ink);
+}
+
+.barra-lateral {
+  position: sticky;
+  top: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+
+  width: 240px;
+  height: 100vh;
+  flex-shrink: 0;
+
+  padding: 34px 22px;
+  overflow-y: auto;
+
+  background: var(--dashboard-surface);
+  border-right: 1px solid var(--dashboard-line);
+}
+
+.marca-barra h2 {
+  margin: 6px 0 0;
+  font-family: var(--font-display), serif;
+  font-size: 23px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--dashboard-ink);
+}
+
+.marca-eyebrow {
+  display: block;
+  color: var(--dashboard-blue-deep);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.navegacao {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.link-nav {
+  display: block;
+  padding: 10px 12px;
+  border-left: 2px solid transparent;
+  border-radius: 4px;
+  color: var(--dashboard-ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.link-nav:hover {
+  background: var(--dashboard-surface-soft);
+  color: var(--dashboard-ink);
+}
+
+.link-nav.ativo {
+  background: var(--dashboard-blue-pale);
+  border-left-color: var(--dashboard-blue-deep);
+  color: var(--dashboard-blue-deep);
+  font-weight: 600;
+}
+
+.conteudo-principal {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .layout-casamento {
+    flex-direction: column;
+  }
+
+  .barra-lateral {
+    position: static;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--dashboard-line);
+  }
+
+  .navegacao {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+  }
+
+  .link-nav {
+    padding: 6px 10px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+  }
+
+  .link-nav.ativo {
+    border-bottom-color: var(--dashboard-blue-deep);
+  }
 }
