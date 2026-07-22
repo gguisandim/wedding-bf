@@ -3,23 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cormorant_Garamond, Jost } from "next/font/google";
 import { RamoBotanico } from "@/components/ornamentos";
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const jost = Jost({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 const links = [
   { href: "/painel", label: "Visão geral" },
@@ -41,7 +25,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable} layout-casamento`}>
+    <div className="layout-casamento">
       <aside className="barra-lateral">
         <div className="marca-barra">
           <span className="marca-eyebrow">Casamento</span>
