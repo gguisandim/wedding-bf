@@ -141,7 +141,7 @@ export default function LoginPage() {
             <span aria-hidden="true" />
 
             <strong>
-              18 de julho de 2027
+              08 de Agosto de 2027
             </strong>
 
             <span aria-hidden="true" />
@@ -180,7 +180,7 @@ export default function LoginPage() {
                 className={styles.monogram}
                 aria-hidden="true"
               >
-                B
+              ❤
               </div>
 
               <span className={styles.formEyebrow}>
@@ -386,7 +386,7 @@ export default function LoginPage() {
 
             <i aria-hidden="true" />
 
-            <span>18 · 07 · 2027</span>
+            <span>07 · 08 · 2027</span>
           </footer>
         </div>
       </section>
