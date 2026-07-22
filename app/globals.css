@@ -23,3 +23,28 @@ textarea {
 a {
   color: inherit;
 }
+
+:root {
+  --dashboard-background: #f9f6ee;
+  --dashboard-surface: #ffffff;
+  --dashboard-surface-soft: #f6f1ea;
+
+  --dashboard-primary: #404d77;
+  --dashboard-primary-soft: #dce6ef;
+
+  --dashboard-text: #302d2a;
+  --dashboard-text-secondary: #716b64;
+
+  --dashboard-border: #e7e1d8;
+  --dashboard-green: #92966f;
+  --dashboard-yellow: #ffefc3;
+
+  --dashboard-sidebar-width: 220px;
+
+  --dashboard-radius-sm: 10px;
+  --dashboard-radius-md: 16px;
+  --dashboard-radius-lg: 22px;
+
+  --dashboard-shadow:
+    0 12px 36px rgba(64, 77, 119, 0.06);
+}

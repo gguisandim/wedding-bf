@@ -1,17 +1,23 @@
 import type { ReactNode } from "react";
+
 import Sidebar from "@/components/dashboard/sidebar";
+
 import "./dashboard.css";
+
+type DashboardLayoutProps = {
+  children: ReactNode;
+};
 
 export default function DashboardLayout({
   children,
-}: {
-  children: ReactNode;
-}) {
+}: DashboardLayoutProps) {
   return (
-    <div className="layout-casamento">
+    <div className="dashboard-shell">
       <Sidebar />
 
-      <main className="conteudo-principal">{children}</main>
+      <main className="dashboard-main">
+        <div className="dashboard-container">{children}</div>
+      </main>
     </div>
   );
 }
