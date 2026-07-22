@@ -3409,3 +3409,1193 @@
     justify-self: flex-end;
   }
 }
+/* ======================================================
+   TEMA FINAL — PAPELARIA FLORAL DE CASAMENTO
+   Mantém toda a estrutura e os componentes existentes.
+   Não depende de PNG ou imagem externa.
+====================================================== */
+
+/* ======================================================
+   BASE E FUNDO GERAL
+====================================================== */
+
+.dashboard-shell {
+  position: relative;
+  isolation: isolate;
+
+  color: var(--dashboard-text);
+  background:
+    radial-gradient(
+      circle at 7% -5%,
+      rgba(169, 191, 217, 0.54),
+      transparent 26rem
+    ),
+    radial-gradient(
+      circle at 100% 1%,
+      rgba(242, 220, 134, 0.28),
+      transparent 22rem
+    ),
+    linear-gradient(
+      135deg,
+      #e8f1f7 0%,
+      #f7f3e9 48%,
+      #edf3f6 100%
+    );
+}
+
+.dashboard-shell::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+
+  opacity: 0.24;
+
+  background-image:
+    linear-gradient(rgba(48, 50, 70, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48, 50, 70, 0.018) 1px, transparent 1px);
+  background-size: 4px 4px;
+
+  pointer-events: none;
+}
+
+/* ======================================================
+   SIDEBAR — COMO A LATERAL DE UM CONVITE
+====================================================== */
+
+.dashboard-sidebar {
+  position: sticky;
+  isolation: isolate;
+
+  padding: 32px 18px 22px;
+
+  color: var(--dashboard-primary-dark);
+  background:
+    radial-gradient(
+      ellipse 52px 70px at 94% 2%,
+      rgba(132, 162, 199, 0.42) 0 48%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 52px 70px at 108% 8%,
+      rgba(220, 232, 241, 0.88) 0 48%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 28px 68px at 89% 14%,
+      rgba(146, 155, 120, 0.42) 0 46%,
+      transparent 48%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(255, 252, 244, 0.99),
+      rgba(249, 245, 235, 0.98)
+    );
+
+  border-right: 1px solid rgba(97, 117, 153, 0.3);
+
+  box-shadow:
+    16px 0 50px rgba(48, 61, 89, 0.09),
+    inset -1px 0 rgba(255, 255, 255, 0.8);
+
+  scrollbar-color: rgba(105, 131, 169, 0.38) transparent;
+}
+
+.dashboard-sidebar::before {
+  content: "";
+
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  z-index: -1;
+
+  border: 1px solid rgba(105, 131, 169, 0.16);
+  border-radius: 8px 28px 8px 28px;
+
+  pointer-events: none;
+}
+
+.dashboard-sidebar::after {
+  content: "✦";
+
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 0;
+
+  padding: 0 10px;
+
+  font-size: 12px;
+  color: var(--dashboard-gold);
+  background: var(--dashboard-paper);
+
+  transform: translateX(-50%);
+}
+
+.sidebar-header,
+.sidebar-navigation,
+.sidebar-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-header {
+  padding: 18px 14px 27px;
+
+  text-align: center;
+
+  border-bottom: 1px solid rgba(105, 131, 169, 0.22);
+}
+
+.sidebar-eyebrow {
+  margin-bottom: 9px;
+
+  font-size: 9px;
+  letter-spacing: 0.24em;
+
+  color: var(--dashboard-accent-dark);
+}
+
+.sidebar-couple {
+  font-family: var(--dashboard-font-display);
+  font-size: 25px;
+  line-height: 1.08;
+
+  color: var(--dashboard-primary);
+}
+
+.sidebar-couple:hover {
+  color: var(--dashboard-accent-dark);
+}
+
+.sidebar-couple:focus-visible {
+  outline-color: var(--dashboard-blue-medium);
+}
+
+.sidebar-wedding-date {
+  margin-top: 11px;
+
+  font-size: 10px;
+  color: rgba(63, 82, 127, 0.72);
+}
+
+.sidebar-navigation {
+  padding: 7px 2px 0;
+}
+
+.sidebar-group {
+  margin-top: 20px;
+}
+
+.sidebar-group-title {
+  padding: 0 12px;
+  margin-bottom: 8px;
+
+  font-size: 8px;
+  letter-spacing: 0.2em;
+
+  color: rgba(63, 82, 127, 0.58);
+}
+
+.sidebar-group-items {
+  gap: 4px;
+}
+
+.sidebar-link {
+  min-height: 42px;
+  padding: 9px 12px;
+
+  border: 1px solid transparent;
+  border-radius: 7px 16px 7px 16px;
+
+  font-family: var(--dashboard-font-display);
+  font-size: 14px;
+  font-weight: 400;
+
+  color: rgba(48, 50, 70, 0.76);
+}
+
+.sidebar-link:hover {
+  color: var(--dashboard-primary-dark);
+  background: rgba(220, 232, 241, 0.55);
+  border-color: rgba(105, 131, 169, 0.18);
+}
+
+.sidebar-link:focus-visible {
+  outline-color: var(--dashboard-blue-medium);
+}
+
+.sidebar-link-active,
+.sidebar-link-active:hover {
+  color: var(--dashboard-primary-dark);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(169, 191, 217, 0.46),
+      rgba(255, 250, 242, 0.7)
+    );
+
+  border-color: rgba(105, 131, 169, 0.26);
+}
+
+.sidebar-link-active::before {
+  left: 1px;
+
+  width: 2px;
+  height: 24px;
+
+  background: var(--dashboard-accent);
+}
+
+.sidebar-link-active .sidebar-link-indicator {
+  color: var(--dashboard-gold);
+}
+
+.sidebar-footer {
+  padding: 18px 12px 4px;
+
+  border-top: 1px solid rgba(105, 131, 169, 0.22);
+}
+
+.sidebar-monogram {
+  width: 38px;
+  height: 38px;
+
+  border-color: rgba(105, 131, 169, 0.46);
+
+  font-family: var(--dashboard-font-display);
+  font-style: italic;
+
+  color: var(--dashboard-primary);
+  background: rgba(255, 250, 242, 0.9);
+
+  box-shadow: inset 0 0 0 4px rgba(220, 232, 241, 0.32);
+}
+
+.sidebar-footer strong {
+  color: var(--dashboard-primary-dark);
+}
+
+.sidebar-footer > div > span {
+  color: rgba(63, 82, 127, 0.62);
+}
+
+/* ======================================================
+   ÁREA PRINCIPAL
+====================================================== */
+
+.dashboard-main {
+  position: relative;
+  isolation: isolate;
+
+  padding:
+    42px
+    clamp(26px, 4.3vw, 68px)
+    68px;
+
+  background:
+    radial-gradient(
+      circle at 98% 2%,
+      rgba(242, 220, 134, 0.2),
+      transparent 20rem
+    ),
+    radial-gradient(
+      circle at 78% 96%,
+      rgba(146, 155, 120, 0.12),
+      transparent 27rem
+    ),
+    transparent;
+}
+
+.dashboard-main::before {
+  content: "";
+
+  position: fixed;
+  top: 36px;
+  right: 34px;
+  z-index: -1;
+
+  width: 220px;
+  height: 180px;
+
+  opacity: 0.34;
+
+  background:
+    radial-gradient(
+      ellipse 42px 68px at 48% 23%,
+      rgba(130, 159, 196, 0.72) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 42px 68px at 68% 35%,
+      rgba(220, 232, 241, 0.94) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      circle at 58% 35%,
+      rgba(214, 184, 87, 0.92) 0 8%,
+      transparent 9%
+    ),
+    radial-gradient(
+      ellipse 22px 62px at 30% 56%,
+      rgba(146, 155, 120, 0.7) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 22px 62px at 86% 62%,
+      rgba(146, 155, 120, 0.58) 0 47%,
+      transparent 49%
+    );
+
+  transform: rotate(11deg);
+
+  pointer-events: none;
+}
+
+.dashboard-container {
+  max-width: 1460px;
+}
+
+.dashboard-page {
+  gap: 25px;
+}
+
+/* ======================================================
+   TIPOGRAFIA E COMPONENTES BASE
+====================================================== */
+
+.dashboard-eyebrow,
+.wedding-header-eyebrow,
+.next-steps-progress-label,
+.financial-summary-label,
+.metric-card-label,
+.next-step-category,
+.checklist-page-progress-circle span,
+.checklist-group-progress span {
+  letter-spacing: 0.19em;
+}
+
+.dashboard-eyebrow,
+.wedding-header-eyebrow {
+  color: var(--dashboard-accent-dark);
+}
+
+.dashboard-title,
+.wedding-header-title,
+.metrics-section-title,
+.next-steps-title,
+.summary-card-title,
+.checklist-page-header-content h1,
+.checklist-group-heading h2 {
+  font-family: var(--dashboard-font-display);
+  color: var(--dashboard-primary-dark);
+}
+
+.dashboard-title {
+  font-size: clamp(42px, 4.5vw, 62px);
+  font-style: italic;
+  letter-spacing: -0.04em;
+}
+
+.dashboard-description {
+  color: var(--dashboard-text-secondary);
+}
+
+.dashboard-card,
+.metric-card,
+.next-steps-section,
+.summary-card,
+.checklist-page-header,
+.checklist-toolbar,
+.checklist-group {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 253, 248, 0.98),
+      rgba(255, 249, 239, 0.94)
+    );
+
+  border-color: rgba(164, 159, 147, 0.42);
+
+  box-shadow:
+    0 20px 46px rgba(48, 61, 89, 0.075),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.dashboard-button {
+  min-height: 43px;
+
+  border-radius: 7px 14px 7px 14px;
+
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-button-primary,
+.checklist-new-task,
+.next-steps-progress-button {
+  background:
+    linear-gradient(
+      135deg,
+      var(--dashboard-primary),
+      var(--dashboard-primary-dark)
+    );
+
+  box-shadow: 0 10px 22px rgba(45, 60, 97, 0.18);
+}
+
+.dashboard-button-primary:hover,
+.checklist-new-task:hover,
+.next-steps-progress-button:hover {
+  background: var(--dashboard-primary-dark);
+}
+
+.dashboard-button-secondary {
+  background: var(--dashboard-accent);
+}
+
+.dashboard-button-soft {
+  background: rgba(220, 232, 241, 0.72);
+  border-color: rgba(105, 131, 169, 0.24);
+}
+
+.dashboard-badge {
+  border: 1px solid rgba(105, 131, 169, 0.12);
+  border-radius: 6px 12px 6px 12px;
+}
+
+/* ======================================================
+   CABEÇALHO PRINCIPAL — CONVITE IMPRESSO
+====================================================== */
+
+.wedding-header {
+  grid-template-columns: minmax(0, 1fr) 205px;
+  gap: 54px;
+
+  min-height: 280px;
+  padding: 50px 54px;
+
+  background:
+    radial-gradient(
+      ellipse 56px 82px at 84% 9%,
+      rgba(130, 159, 196, 0.36) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 56px 82px at 91% 15%,
+      rgba(220, 232, 241, 0.72) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 28px 74px at 79% 29%,
+      rgba(146, 155, 120, 0.24) 0 47%,
+      transparent 49%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 253, 247, 0.99),
+      rgba(255, 248, 236, 0.96)
+    );
+
+  border-color: rgba(105, 131, 169, 0.28);
+  border-radius: 8px 30px 8px 30px;
+}
+
+.wedding-header::before {
+  top: 19px;
+  left: 19px;
+  right: auto;
+
+  width: 68px;
+  height: 68px;
+
+  border: 0;
+  border-top: 1px solid rgba(105, 131, 169, 0.42);
+  border-left: 1px solid rgba(105, 131, 169, 0.42);
+  border-radius: 0;
+}
+
+.wedding-header::after {
+  right: 19px;
+  bottom: 19px;
+
+  width: 68px;
+  height: 68px;
+
+  border: 0;
+  border-right: 1px solid rgba(105, 131, 169, 0.34);
+  border-bottom: 1px solid rgba(105, 131, 169, 0.34);
+  border-radius: 0;
+}
+
+.wedding-header-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+}
+
+.wedding-header-title {
+  margin-top: 14px;
+
+  font-size: clamp(52px, 5.6vw, 78px);
+  font-style: italic;
+  letter-spacing: -0.045em;
+}
+
+.wedding-header-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 29px;
+
+  font-family: var(--dashboard-font-display);
+  font-size: 17px;
+
+  color: var(--dashboard-primary);
+}
+
+.wedding-header-date::before,
+.wedding-header-date::after {
+  content: "";
+
+  width: 32px;
+  height: 1px;
+
+  background: rgba(105, 131, 169, 0.44);
+}
+
+.wedding-header-status {
+  margin-top: 10px;
+}
+
+.wedding-header-countdown {
+  width: 205px;
+  min-height: 205px;
+
+  background:
+    radial-gradient(
+      circle at 50% 16%,
+      rgba(220, 232, 241, 0.6),
+      transparent 52%
+    ),
+    rgba(255, 250, 241, 0.9);
+
+  border-color: rgba(105, 131, 169, 0.38);
+
+  box-shadow:
+    0 18px 38px rgba(48, 61, 89, 0.09),
+    inset 0 0 0 8px rgba(255, 255, 255, 0.6),
+    inset 0 0 0 9px rgba(105, 131, 169, 0.16);
+}
+
+.wedding-header-countdown::before {
+  content: "✦";
+
+  position: absolute;
+  top: 23px;
+
+  font-size: 10px;
+  color: var(--dashboard-gold);
+}
+
+.wedding-header-countdown::after {
+  inset: 11px;
+
+  border-color: rgba(105, 131, 169, 0.2);
+}
+
+.wedding-header-countdown-label {
+  color: var(--dashboard-accent-dark);
+}
+
+.wedding-header-countdown-number {
+  font-family: var(--dashboard-font-display);
+  font-size: 60px;
+  font-style: italic;
+}
+
+/* Substitui qualquer PNG floral por uma composição CSS */
+.wedding-header-floral {
+  position: absolute;
+  top: -18px;
+  right: 155px;
+  z-index: 1;
+
+  display: block;
+
+  width: 330px;
+  height: 235px;
+
+  opacity: 0.34;
+
+  background-image: none;
+  background:
+    radial-gradient(
+      ellipse 50px 76px at 50% 25%,
+      rgba(130, 159, 196, 0.88) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 50px 76px at 66% 35%,
+      rgba(220, 232, 241, 0.95) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 50px 76px at 42% 47%,
+      rgba(169, 191, 217, 0.82) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      circle at 54% 37%,
+      rgba(214, 184, 87, 0.94) 0 7%,
+      transparent 8%
+    ),
+    radial-gradient(
+      ellipse 24px 72px at 24% 55%,
+      rgba(146, 155, 120, 0.72) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 24px 72px at 84% 58%,
+      rgba(146, 155, 120, 0.64) 0 47%,
+      transparent 49%
+    );
+
+  transform: rotate(8deg);
+}
+
+/* ======================================================
+   MÉTRICAS — CARTÕES DE PAPELARIA
+====================================================== */
+
+.metrics-section-heading {
+  margin-bottom: 18px;
+}
+
+.metrics-section-title {
+  font-size: 31px;
+  font-style: italic;
+}
+
+.metric-card {
+  min-height: 184px;
+  padding: 25px 24px;
+
+  border-radius: 7px 22px 7px 22px;
+}
+
+.metric-card::before {
+  content: "";
+
+  position: absolute;
+  top: 12px;
+  left: 12px;
+
+  width: 25px;
+  height: 25px;
+
+  border-top: 1px solid rgba(105, 131, 169, 0.24);
+  border-left: 1px solid rgba(105, 131, 169, 0.24);
+
+  pointer-events: none;
+}
+
+.metric-card::after {
+  top: -48px;
+  right: -45px;
+
+  width: 118px;
+  height: 118px;
+
+  opacity: 0.16;
+}
+
+.metric-card-marker {
+  width: 6px;
+  height: 6px;
+}
+
+.metric-card-label {
+  font-size: 9px;
+  letter-spacing: 0.17em;
+}
+
+.metric-card-value {
+  margin-top: 17px;
+
+  font-family: var(--dashboard-font-display);
+  font-size: clamp(34px, 3vw, 44px);
+  font-weight: 400;
+  font-style: italic;
+
+  color: var(--dashboard-primary-dark);
+}
+
+.metric-card-progress,
+.guest-summary-segmented-bar,
+.financial-summary-progress {
+  height: 6px;
+
+  background: rgba(63, 82, 127, 0.08);
+}
+
+/* ======================================================
+   PRÓXIMOS PASSOS
+====================================================== */
+
+.next-steps-section {
+  position: relative;
+  isolation: isolate;
+
+  padding: 34px;
+
+  border-radius: 9px 28px 9px 28px;
+}
+
+.next-steps-section::before {
+  content: "";
+
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: -1;
+
+  width: 65px;
+  height: 65px;
+
+  border-top: 1px solid rgba(105, 131, 169, 0.25);
+  border-right: 1px solid rgba(105, 131, 169, 0.25);
+}
+
+.next-steps-title {
+  font-size: 33px;
+  font-style: italic;
+}
+
+.next-step-item {
+  min-height: 112px;
+
+  background: rgba(255, 251, 243, 0.78);
+  border-color: rgba(164, 159, 147, 0.34);
+  border-radius: 7px 16px 7px 16px;
+}
+
+.next-step-indicator {
+  width: 3px;
+  height: 57px;
+}
+
+.next-step-title {
+  font-family: var(--dashboard-font-display);
+  font-size: 16px;
+  font-weight: 400;
+
+  color: var(--dashboard-primary-dark);
+}
+
+.next-steps-progress {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(169, 191, 217, 0.48),
+      transparent 42%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(244, 239, 226, 0.9),
+      rgba(255, 251, 243, 0.98)
+    );
+
+  border-color: rgba(105, 131, 169, 0.22);
+  border-radius: 8px 20px 8px 20px;
+}
+
+.next-steps-progress-value {
+  font-family: var(--dashboard-font-display);
+  font-style: italic;
+}
+
+.next-steps-progress-message {
+  color: var(--dashboard-primary-dark);
+}
+
+/* ======================================================
+   RESUMOS
+====================================================== */
+
+.summary-card {
+  padding: 31px;
+
+  border-radius: 8px 26px 8px 26px;
+}
+
+.summary-card::after {
+  content: "";
+
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+
+  width: 42px;
+  height: 42px;
+
+  border-left: 1px solid rgba(105, 131, 169, 0.2);
+  border-bottom: 1px solid rgba(105, 131, 169, 0.2);
+
+  pointer-events: none;
+}
+
+.summary-card-title {
+  font-size: 31px;
+  font-style: italic;
+}
+
+.guest-summary-total strong,
+.financial-summary-value-row strong {
+  font-family: var(--dashboard-font-display);
+  font-size: 56px;
+  font-style: italic;
+
+  color: var(--dashboard-primary-dark);
+}
+
+.guest-summary-row,
+.financial-summary-row {
+  border-bottom-color: rgba(164, 159, 147, 0.26);
+}
+
+.guest-summary-value {
+  color: var(--dashboard-primary);
+}
+
+/* ======================================================
+   CHECKLIST
+====================================================== */
+
+.checklist-page-header {
+  min-height: 250px;
+  padding: 46px 50px;
+
+  background:
+    radial-gradient(
+      ellipse 48px 74px at 91% 9%,
+      rgba(130, 159, 196, 0.34) 0 47%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse 24px 70px at 84% 22%,
+      rgba(146, 155, 120, 0.24) 0 47%,
+      transparent 49%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 253, 247, 0.99),
+      rgba(255, 248, 236, 0.96)
+    );
+
+  border-radius: 8px 28px 8px 28px;
+}
+
+.checklist-page-header::before {
+  content: "";
+
+  position: absolute;
+  top: 19px;
+  left: 19px;
+
+  width: 64px;
+  height: 64px;
+
+  border-top: 1px solid rgba(105, 131, 169, 0.34);
+  border-left: 1px solid rgba(105, 131, 169, 0.34);
+
+  pointer-events: none;
+}
+
+.checklist-page-header::after {
+  top: auto;
+  right: 19px;
+  bottom: 19px;
+
+  width: 64px;
+  height: 64px;
+
+  border: 0;
+  border-right: 1px solid rgba(105, 131, 169, 0.28);
+  border-bottom: 1px solid rgba(105, 131, 169, 0.28);
+  border-radius: 0;
+}
+
+.checklist-page-header-content h1 {
+  font-size: clamp(50px, 5.3vw, 70px);
+  font-style: italic;
+}
+
+.checklist-page-progress-circle {
+  width: 142px;
+  height: 142px;
+
+  border-color: rgba(105, 131, 169, 0.36);
+
+  background:
+    radial-gradient(
+      circle at 50% 15%,
+      rgba(220, 232, 241, 0.72),
+      transparent 56%
+    ),
+    rgba(255, 250, 242, 0.94);
+
+  box-shadow:
+    inset 0 0 0 7px rgba(255, 255, 255, 0.7),
+    inset 0 0 0 8px rgba(105, 131, 169, 0.15),
+    0 16px 34px rgba(48, 61, 89, 0.08);
+}
+
+.checklist-page-progress-circle strong {
+  font-size: 41px;
+  font-style: italic;
+}
+
+.checklist-toolbar {
+  padding: 15px;
+
+  border-radius: 7px 18px 7px 18px;
+}
+
+.checklist-search {
+  min-height: 43px;
+
+  background: rgba(255, 253, 248, 0.92);
+  border-color: rgba(164, 159, 147, 0.38);
+  border-radius: 7px 13px 7px 13px;
+}
+
+.checklist-filters {
+  background: rgba(169, 191, 217, 0.14);
+  border: 1px solid rgba(105, 131, 169, 0.1);
+  border-radius: 7px 13px 7px 13px;
+}
+
+.checklist-filter {
+  border-radius: 5px 10px 5px 10px;
+}
+
+.checklist-filter-active {
+  background: var(--dashboard-paper);
+}
+
+.checklist-new-task {
+  border-radius: 7px 14px 7px 14px;
+}
+
+.checklist-group {
+  position: relative;
+
+  padding: 30px;
+
+  border-radius: 8px 24px 8px 24px;
+}
+
+.checklist-group::before {
+  content: "";
+
+  position: absolute;
+  top: 13px;
+  left: 13px;
+
+  width: 30px;
+  height: 30px;
+
+  border-top: 1px solid rgba(105, 131, 169, 0.18);
+  border-left: 1px solid rgba(105, 131, 169, 0.18);
+
+  pointer-events: none;
+}
+
+.checklist-group-heading h2 {
+  font-size: 28px;
+  font-style: italic;
+}
+
+.checklist-task {
+  padding: 17px;
+
+  background: rgba(255, 252, 246, 0.76);
+  border-color: rgba(164, 159, 147, 0.32);
+  border-radius: 7px 15px 7px 15px;
+}
+
+.checklist-task-check {
+  border-radius: 6px 10px 6px 10px;
+}
+
+.checklist-task-heading h3 {
+  font-family: var(--dashboard-font-display);
+  font-size: 15px;
+  font-weight: 400;
+
+  color: var(--dashboard-primary-dark);
+}
+
+.checklist-task-menu {
+  border-radius: 6px 11px 6px 11px;
+}
+
+/* ======================================================
+   LINKS E MICROINTERAÇÕES
+====================================================== */
+
+.summary-card-link,
+.next-steps-view-all,
+.checklist-group-add,
+.guest-summary-reminder,
+.financial-summary-footer a {
+  color: var(--dashboard-primary);
+}
+
+.summary-card-link:hover,
+.next-steps-view-all:hover,
+.checklist-group-add:hover,
+.guest-summary-reminder:hover,
+.financial-summary-footer a:hover {
+  color: var(--dashboard-accent-dark);
+}
+
+.metric-card:hover,
+.next-step-item:hover,
+.checklist-task:hover {
+  border-color: rgba(105, 131, 169, 0.42);
+
+  box-shadow: 0 18px 38px rgba(48, 61, 89, 0.095);
+}
+
+/* ======================================================
+   RESPONSIVIDADE DO TEMA
+====================================================== */
+
+@media (max-width: 1050px) {
+  .dashboard-sidebar {
+    padding-inline: 14px;
+  }
+
+  .wedding-header {
+    grid-template-columns: minmax(0, 1fr) 175px;
+    padding: 43px;
+  }
+
+  .wedding-header-countdown {
+    width: 175px;
+    min-height: 175px;
+  }
+
+  .wedding-header-floral {
+    right: 110px;
+    opacity: 0.22;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-main {
+    padding: 28px 20px 44px;
+  }
+
+  .dashboard-main::before {
+    opacity: 0.18;
+  }
+}
+
+@media (max-width: 760px) {
+  .wedding-header,
+  .checklist-page-header {
+    padding: 35px 31px;
+    border-radius: 7px 22px 7px 22px;
+  }
+
+  .wedding-header-title,
+  .checklist-page-header-content h1 {
+    font-size: 46px;
+  }
+
+  .wedding-header-date {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .wedding-header-date::before,
+  .wedding-header-date::after {
+    display: none;
+  }
+
+  .wedding-header-countdown {
+    width: 100%;
+    min-height: auto;
+
+    border-radius: 7px 18px 7px 18px;
+  }
+
+  .wedding-header-countdown::after {
+    border-radius: 5px 14px 5px 14px;
+  }
+
+  .wedding-header-floral {
+    right: -80px;
+
+    opacity: 0.13;
+  }
+
+  .next-steps-section,
+  .summary-card,
+  .checklist-group {
+    border-radius: 7px 20px 7px 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-main {
+    padding: 20px 15px 34px;
+  }
+
+  .wedding-header,
+  .checklist-page-header {
+    padding: 30px 24px;
+  }
+
+  .wedding-header::before,
+  .wedding-header::after,
+  .checklist-page-header::before,
+  .checklist-page-header::after {
+    width: 43px;
+    height: 43px;
+  }
+
+  .wedding-header-title,
+  .checklist-page-header-content h1,
+  .dashboard-title {
+    font-size: 39px;
+  }
+
+  .metric-card,
+  .next-steps-section,
+  .summary-card,
+  .checklist-group {
+    padding: 22px;
+  }
+
+  .metric-card-value,
+  .guest-summary-total strong,
+  .financial-summary-value-row strong {
+    font-size: 41px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-header-countdown {
+    animation: none;
+  }
+}

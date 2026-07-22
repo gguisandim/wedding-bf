@@ -9,8 +9,26 @@ body {
   min-height: 100%;
 }
 
+html {
+  color-scheme: light;
+  background: #eaf1f6;
+}
+
 body {
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
+  color: var(--dashboard-text);
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(168, 194, 221, 0.48),
+      transparent 26rem
+    ),
+    radial-gradient(
+      circle at 96% 8%,
+      rgba(248, 224, 135, 0.32),
+      transparent 22rem
+    ),
+    linear-gradient(135deg, #edf4f8 0%, #f8f4ea 48%, #eef3f6 100%);
 }
 
 button,
@@ -24,24 +42,53 @@ a {
   color: inherit;
 }
 
+::selection {
+  color: #ffffff;
+  background: var(--dashboard-primary);
+}
+
 :root {
-  --dashboard-background: #f7f5ef;
-  --dashboard-surface: #fffdfa;
-  --dashboard-surface-soft: #f0eee8;
+  /* Papel e superfícies */
+  --dashboard-background: #edf3f7;
+  --dashboard-paper: #fffaf1;
+  --dashboard-surface: #fffaf2;
+  --dashboard-surface-soft: #f7f1e7;
+  --dashboard-surface-blue: #edf4f9;
 
-  --dashboard-primary: #404d77;
-  --dashboard-primary-dark: #2f3a5d;
+  /* Azul principal da identidade */
+  --dashboard-primary: #3f527f;
+  --dashboard-primary-dark: #2d3c61;
+  --dashboard-primary-soft: rgba(63, 82, 127, 0.1);
 
-  --dashboard-accent: #92966f;
-  --dashboard-accent-dark: #747a59;
-  --dashboard-accent-soft: rgba(146, 150, 111, 0.18);
+  /* Verde sálvia */
+  --dashboard-accent: #929b78;
+  --dashboard-accent-dark: #727b5d;
+  --dashboard-accent-soft: rgba(146, 155, 120, 0.18);
 
-  --dashboard-blue-soft: #aebed5;
-  --dashboard-blue-pale: #cddfe9;
+  /* Azuis florais */
+  --dashboard-blue-soft: #a9bfd9;
+  --dashboard-blue-medium: #829fc4;
+  --dashboard-blue-pale: #dce8f1;
 
-  --dashboard-yellow: #ffefc3;
+  /* Amarelo manteiga / dourado */
+  --dashboard-yellow: #f2dc86;
+  --dashboard-yellow-soft: #fbefbd;
+  --dashboard-gold: #d6b857;
 
-  --dashboard-text: #302b27;
-  --dashboard-text-secondary: #716c65;
-  --dashboard-border: #e2ddd4;
+  /* Texto e linhas */
+  --dashboard-text: #303246;
+  --dashboard-text-secondary: #77746e;
+  --dashboard-border: #d9d4c8;
+  --dashboard-border-blue: rgba(105, 131, 169, 0.34);
+
+  /* Geometria e profundidade */
+  --dashboard-sidebar-width: 244px;
+  --dashboard-radius-sm: 8px;
+  --dashboard-radius-md: 12px;
+  --dashboard-radius-lg: 18px;
+  --dashboard-shadow: 0 18px 48px rgba(48, 61, 89, 0.09);
+  --dashboard-shadow-soft: 0 10px 30px rgba(48, 61, 89, 0.06);
+
+  /* Fontes */
+  --dashboard-font-display: Georgia, "Times New Roman", serif;
 }
