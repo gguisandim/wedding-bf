@@ -106,7 +106,7 @@ export default function Sidebar() {
         </Link>
 
         <span className="sidebar-wedding-date">
-          18 · 07 · 2027
+          07 · 08 · 2027
         </span>
       </div>
 
