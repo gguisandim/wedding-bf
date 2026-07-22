@@ -1,0 +1,23 @@
+:root {
+  --dashboard-bg: #faf6f1;
+  --dashboard-surface: #ffffff;
+  --dashboard-surface-soft: #f6efe7;
+  --dashboard-line: #e5ddd5;
+  --dashboard-ink: #3b332c;
+  --dashboard-ink-soft: #796d63;
+  --dashboard-blue-deep: #355776;
+  --dashboard-blue-mid: #7d9dbc;
+  --dashboard-blue-pale: #dfeaf2;
+  --dashboard-sage: #89966b;
+  --dashboard-sage-soft: #e7eadf;
+  --dashboard-butter: #e0bd56;
+  --dashboard-butter-soft: #fff2cc;
+  --dashboard-clay: #b96955;
+  --dashboard-clay-soft: #f3e1da;
+}
+
+.layout-casamento {
+  min-height: 100vh;
+  background: var(--dashboard-bg);
+  color: var(--dashboard-ink);
+}
