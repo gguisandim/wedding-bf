@@ -99,10 +99,10 @@ export default function Sidebar() {
   return (
     <aside className="dashboard-sidebar">
       <div className="sidebar-header">
-        <span className="sidebar-eyebrow">Nosso casamento</span>
+        <span className="sidebar-eyebrow">Grande Dia</span>
 
         <Link href="/painel" className="sidebar-couple">
-          Bruna &amp; Felipe
+          Babis &amp; Lipe
         </Link>
 
         <span className="sidebar-wedding-date">
@@ -148,7 +148,7 @@ export default function Sidebar() {
         <span className="sidebar-monogram">B</span>
 
         <div>
-          <strong>Bruna</strong>
+          <strong>Usuário</strong>
           <span>Administradora</span>
         </div>
       </div>

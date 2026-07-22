@@ -25,26 +25,23 @@ a {
 }
 
 :root {
-  --dashboard-background: #f9f6ee;
-  --dashboard-surface: #ffffff;
-  --dashboard-surface-soft: #f6f1ea;
+  --dashboard-background: #f7f5ef;
+  --dashboard-surface: #fffdfa;
+  --dashboard-surface-soft: #f0eee8;
 
   --dashboard-primary: #404d77;
-  --dashboard-primary-soft: #dce6ef;
+  --dashboard-primary-dark: #2f3a5d;
 
-  --dashboard-text: #302d2a;
-  --dashboard-text-secondary: #716b64;
+  --dashboard-accent: #92966f;
+  --dashboard-accent-dark: #747a59;
+  --dashboard-accent-soft: rgba(146, 150, 111, 0.18);
 
-  --dashboard-border: #e7e1d8;
-  --dashboard-green: #92966f;
+  --dashboard-blue-soft: #aebed5;
+  --dashboard-blue-pale: #cddfe9;
+
   --dashboard-yellow: #ffefc3;
 
-  --dashboard-sidebar-width: 220px;
-
-  --dashboard-radius-sm: 10px;
-  --dashboard-radius-md: 16px;
-  --dashboard-radius-lg: 22px;
-
-  --dashboard-shadow:
-    0 12px 36px rgba(64, 77, 119, 0.06);
+  --dashboard-text: #302b27;
+  --dashboard-text-secondary: #716c65;
+  --dashboard-border: #e2ddd4;
 }

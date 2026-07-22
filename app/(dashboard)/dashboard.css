@@ -1,12 +1,17 @@
+/* ======================================================
+   ESTRUTURA GERAL
+====================================================== */
+
 .dashboard-shell {
   min-height: 100dvh;
+
   display: grid;
   grid-template-columns:
-    var(--dashboard-sidebar-width)
+    var(--dashboard-sidebar-width, 220px)
     minmax(0, 1fr);
 
-  background: var(--dashboard-background);
-  color: var(--dashboard-text);
+  color: var(--dashboard-text, #302b27);
+  background: var(--dashboard-background, #f7f5ef);
 }
 
 /* ======================================================
@@ -16,37 +21,76 @@
 .dashboard-sidebar {
   position: sticky;
   top: 0;
+  z-index: 20;
 
   display: flex;
   flex-direction: column;
 
-  width: var(--dashboard-sidebar-width);
+  width: var(--dashboard-sidebar-width, 220px);
   height: 100dvh;
   padding: 30px 16px 20px;
 
+  overflow-x: hidden;
   overflow-y: auto;
 
-  background: var(--dashboard-surface);
-  border-right: 1px solid var(--dashboard-border);
+  color: #f8f5ef;
+
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(174, 190, 213, 0.13),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      var(--dashboard-primary-dark, #2f3a5d) 0%,
+      #35415f 54%,
+      #2d3856 100%
+    );
+
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(205, 223, 233, 0.35) transparent;
 }
+
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(205, 223, 233, 0.3);
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(205, 223, 233, 0.46);
+}
+
+/* ======================================================
+   CABEÇALHO DA SIDEBAR
+====================================================== */
 
 .sidebar-header {
   padding: 0 12px 24px;
-  border-bottom: 1px solid var(--dashboard-border);
+  border-bottom: 1px solid rgba(205, 223, 233, 0.18);
 }
 
 .sidebar-eyebrow {
   display: block;
-
   margin-bottom: 8px;
 
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.18em;
   line-height: 1.4;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 
-  color: var(--dashboard-primary);
+  color: #cddfe9;
 }
 
 .sidebar-couple {
@@ -55,35 +99,44 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: 22px;
   font-style: italic;
+  font-weight: 400;
   line-height: 1.2;
+
+  color: #fffdf9;
   text-decoration: none;
 
-  color: var(--dashboard-text);
+  transition: color 150ms ease;
 }
 
 .sidebar-couple:hover {
-  color: var(--dashboard-primary);
+  color: #ffefc3;
+}
+
+.sidebar-couple:focus-visible {
+  outline: 2px solid #aebed5;
+  outline-offset: 5px;
+  border-radius: 3px;
 }
 
 .sidebar-wedding-date {
   display: block;
-
-  margin-top: 8px;
+  margin-top: 9px;
 
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.4;
   letter-spacing: 0.14em;
 
-  color: var(--dashboard-text-secondary);
+  color: rgba(205, 223, 233, 0.76);
 }
 
 /* ======================================================
-   GRUPOS DO MENU
+   NAVEGAÇÃO
 ====================================================== */
 
 .sidebar-navigation {
   flex: 1;
-  padding-top: 6px;
+  padding-top: 5px;
 }
 
 .sidebar-group {
@@ -98,11 +151,11 @@
 
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.16em;
   line-height: 1.4;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
 
-  color: var(--dashboard-text-secondary);
+  color: rgba(205, 223, 233, 0.58);
 }
 
 .sidebar-group-items {
@@ -110,6 +163,10 @@
   flex-direction: column;
   gap: 3px;
 }
+
+/* ======================================================
+   LINKS DA SIDEBAR
+====================================================== */
 
 .sidebar-link {
   position: relative;
@@ -121,23 +178,35 @@
   min-height: 40px;
   padding: 8px 12px;
 
-  border-radius: var(--dashboard-radius-sm);
+  overflow: hidden;
+
+  border-radius: var(--dashboard-radius-sm, 10px);
 
   font-size: 14px;
-  font-weight: 450;
+  font-weight: 500;
   line-height: 1.3;
-  text-decoration: none;
 
-  color: var(--dashboard-text-secondary);
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
 
   transition:
     color 150ms ease,
-    background-color 150ms ease;
+    background-color 150ms ease,
+    transform 150ms ease;
 }
 
 .sidebar-link:hover {
-  color: var(--dashboard-primary);
-  background: var(--dashboard-surface-soft);
+  color: #ffffff;
+  background: rgba(174, 190, 213, 0.13);
+}
+
+.sidebar-link:active {
+  transform: translateY(1px);
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid #aebed5;
+  outline-offset: 2px;
 }
 
 .sidebar-link-indicator {
@@ -147,18 +216,62 @@
 
   border-radius: 999px;
 
+  color: inherit;
   background: currentColor;
+
   opacity: 0;
+
+  transition:
+    width 150ms ease,
+    height 150ms ease,
+    opacity 150ms ease,
+    color 150ms ease;
 }
 
-.sidebar-link-active {
-  font-weight: 600;
+/* ======================================================
+   ITEM ATIVO — VERDE SÁLVIA
+====================================================== */
 
-  color: var(--dashboard-primary);
-  background: var(--dashboard-primary-soft);
+.sidebar-link-active {
+  color: #ffffff;
+
+  background: linear-gradient(
+    90deg,
+    rgba(146, 150, 111, 0.52),
+    rgba(146, 150, 111, 0.32)
+  );
+}
+
+.sidebar-link-active:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(146, 150, 111, 0.62),
+    rgba(146, 150, 111, 0.4)
+  );
+}
+
+.sidebar-link-active::before {
+  content: "";
+
+  position: absolute;
+  top: 50%;
+  left: 0;
+
+  width: 3px;
+  height: 22px;
+
+  border-radius: 0 999px 999px 0;
+
+  background: #cddfe9;
+
+  transform: translateY(-50%);
 }
 
 .sidebar-link-active .sidebar-link-indicator {
+  width: 5px;
+  height: 5px;
+
+  color: #ffefc3;
   opacity: 1;
 }
 
@@ -174,28 +287,30 @@
   padding: 16px 12px 0;
   margin-top: 24px;
 
-  border-top: 1px solid var(--dashboard-border);
+  border-top: 1px solid rgba(205, 223, 233, 0.18);
 }
 
 .sidebar-monogram {
   display: grid;
   place-items: center;
 
-  width: 34px;
-  height: 34px;
+  width: 35px;
+  height: 35px;
   flex-shrink: 0;
 
+  border: 1px solid rgba(205, 223, 233, 0.42);
   border-radius: 50%;
 
   font-family: Georgia, "Times New Roman", serif;
   font-size: 16px;
 
-  color: white;
-  background: var(--dashboard-primary);
+  color: #35415f;
+  background: #fffdf9;
 }
 
-.sidebar-footer div {
+.sidebar-footer > div {
   min-width: 0;
+
   display: flex;
   flex-direction: column;
 }
@@ -205,18 +320,21 @@
 
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.3;
+
+  color: #ffffff;
+
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  color: var(--dashboard-text);
 }
 
-.sidebar-footer div span {
+.sidebar-footer > div > span {
   margin-top: 2px;
 
   font-size: 10px;
+  line-height: 1.3;
 
-  color: var(--dashboard-text-secondary);
+  color: rgba(205, 223, 233, 0.64);
 }
 
 /* ======================================================
@@ -225,7 +343,24 @@
 
 .dashboard-main {
   min-width: 0;
-  padding: 36px clamp(24px, 4vw, 64px) 60px;
+
+  padding:
+    36px
+    clamp(24px, 4vw, 64px)
+    60px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(205, 223, 233, 0.14),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 72% 100%,
+      rgba(146, 150, 111, 0.07),
+      transparent 32%
+    ),
+    var(--dashboard-background, #f7f5ef);
 }
 
 .dashboard-container {
@@ -241,8 +376,165 @@
 }
 
 /* ======================================================
-   RESPONSIVIDADE INICIAL
+   ELEMENTOS BASE DO DASHBOARD
 ====================================================== */
+
+.dashboard-section {
+  width: 100%;
+}
+
+.dashboard-card {
+  background: var(--dashboard-surface, #fffdf9);
+  border: 1px solid var(--dashboard-border, #ded6ca);
+  border-radius: var(--dashboard-radius-md, 16px);
+
+  box-shadow: var(
+    --dashboard-shadow,
+    0 12px 36px rgba(37, 47, 73, 0.08)
+  );
+}
+
+.dashboard-eyebrow {
+  display: block;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.dashboard-title {
+  margin: 10px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(38px, 4vw, 54px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.dashboard-description {
+  max-width: 620px;
+  margin: 16px 0 0;
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  color: var(--dashboard-text-secondary, #766f68);
+}
+
+/* ======================================================
+   BOTÕES BASE
+====================================================== */
+
+.dashboard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 42px;
+  padding: 10px 18px;
+
+  border: 1px solid transparent;
+  border-radius: var(--dashboard-radius-sm, 10px);
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.dashboard-button:active {
+  transform: translateY(1px);
+}
+
+.dashboard-button-primary {
+  color: #ffffff;
+  background: var(--dashboard-primary, #404d77);
+}
+
+.dashboard-button-primary:hover {
+  background: var(--dashboard-primary-dark, #2f3a5d);
+}
+
+.dashboard-button-secondary {
+  color: #fffdf9;
+  background: var(--dashboard-accent, #92966f);
+}
+
+.dashboard-button-secondary:hover {
+  background: #7f8462;
+}
+
+.dashboard-button-soft {
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.28);
+  border-color: rgba(133, 155, 186, 0.28);
+}
+
+.dashboard-button-soft:hover {
+  background: rgba(174, 190, 213, 0.42);
+}
+
+/* ======================================================
+   BADGES E STATUS
+====================================================== */
+
+.dashboard-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  width: fit-content;
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.dashboard-badge-success {
+  color: #596043;
+  background: rgba(146, 150, 111, 0.2);
+}
+
+.dashboard-badge-info {
+  color: #526783;
+  background: rgba(174, 190, 213, 0.28);
+}
+
+.dashboard-badge-warning {
+  color: #786329;
+  background: rgba(255, 239, 195, 0.72);
+}
+
+/* ======================================================
+   RESPONSIVIDADE
+====================================================== */
+
+@media (max-width: 1100px) {
+  .dashboard-main {
+    padding:
+      32px
+      clamp(22px, 3vw, 40px)
+      50px;
+  }
+}
 
 @media (max-width: 900px) {
   .dashboard-shell {
@@ -254,6 +546,2866 @@
   }
 
   .dashboard-main {
+    min-height: 100dvh;
+    padding: 24px 20px 40px;
+  }
+
+  .dashboard-title {
+    font-size: clamp(36px, 9vw, 48px);
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-main {
+    padding: 20px 16px 32px;
+  }
+
+  .dashboard-page {
+    gap: 18px;
+  }
+
+  .dashboard-title {
+    font-size: 36px;
+  }
+
+  .dashboard-description {
+    font-size: 14px;
+  }
+}
+/* ======================================================
+   CABEÇALHO DO CASAMENTO
+====================================================== */
+
+.wedding-header {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  align-items: center;
+  gap: 48px;
+
+  min-height: 245px;
+  padding: 42px 46px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 92% 6%,
+      rgba(174, 190, 213, 0.28),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 76% 110%,
+      rgba(146, 150, 111, 0.15),
+      transparent 34%
+    ),
+    var(--dashboard-surface, #fffdf9);
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-lg, 22px);
+
+  box-shadow: var(
+    --dashboard-shadow,
+    0 12px 36px rgba(37, 47, 73, 0.08)
+  );
+}
+
+.wedding-header::before {
+  content: "";
+
+  position: absolute;
+  top: -55px;
+  right: 110px;
+
+  width: 180px;
+  height: 180px;
+
+  border: 1px solid rgba(174, 190, 213, 0.22);
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.wedding-header::after {
+  content: "";
+
+  position: absolute;
+  right: -55px;
+  bottom: -90px;
+
+  width: 230px;
+  height: 230px;
+
+  border: 1px solid rgba(146, 150, 111, 0.18);
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+/* ======================================================
+   CONTEÚDO DO CABEÇALHO
+====================================================== */
+
+.wedding-header-content {
+  position: relative;
+  z-index: 2;
+
+  max-width: 720px;
+}
+
+.wedding-header-eyebrow {
+  display: block;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.wedding-header-title {
+  margin: 12px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(44px, 5vw, 66px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.wedding-header-date {
+  margin: 25px 0 0;
+
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.wedding-header-status {
+  margin: 8px 0 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.wedding-header-status strong {
+  font-weight: 700;
+  color: var(--dashboard-primary, #404d77);
+}
+
+/* ======================================================
+   CONTAGEM REGRESSIVA
+====================================================== */
+
+.wedding-header-countdown {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 190px;
+  min-height: 190px;
+  padding: 24px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 253, 249, 0.94),
+      rgba(247, 245, 239, 0.78)
+    );
+
+  border: 1px solid rgba(146, 150, 111, 0.42);
+  border-radius: 50%;
+
+  box-shadow:
+    0 16px 34px rgba(47, 58, 93, 0.08),
+    inset 0 0 0 7px rgba(205, 223, 233, 0.12);
+
+  backdrop-filter: blur(8px);
+}
+
+.wedding-header-countdown-label {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-accent-dark, #747a59);
+}
+
+.wedding-header-countdown-number {
+  margin-top: 5px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 54px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.wedding-header-countdown-text {
+  max-width: 110px;
+  margin-top: 5px;
+
+  font-size: 11px;
+  line-height: 1.4;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   RESPONSIVIDADE DO CABEÇALHO
+====================================================== */
+
+@media (max-width: 1050px) {
+  .wedding-header {
+    grid-template-columns: minmax(0, 1fr) 165px;
+    gap: 30px;
+
+    padding: 38px;
+  }
+
+  .wedding-header-countdown {
+    width: 165px;
+    min-height: 165px;
+  }
+
+  .wedding-header-countdown-number {
+    font-size: 46px;
+  }
+}
+
+@media (max-width: 760px) {
+  .wedding-header {
+    grid-template-columns: 1fr;
+    gap: 28px;
+
+    min-height: auto;
+    padding: 34px;
+  }
+
+  .wedding-header-countdown {
+    width: 100%;
+    min-height: auto;
+    padding: 18px 22px;
+
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+
+    border-radius: 14px;
+  }
+
+  .wedding-header-countdown-number {
+    order: -1;
+
+    margin-top: 0;
+    font-size: 36px;
+  }
+
+  .wedding-header-countdown-text {
+    max-width: none;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .wedding-header {
+    padding: 28px 24px;
+    border-radius: 18px;
+  }
+
+  .wedding-header-title {
+    font-size: 42px;
+  }
+
+  .wedding-header-date {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  .wedding-header-status {
+    font-size: 13px;
+  }
+
+  .wedding-header-date span,
+  .wedding-header-status span {
+    display: none;
+  }
+}
+
+/* ======================================================
+   SEÇÃO DE INDICADORES
+====================================================== */
+
+.metrics-section {
+  width: 100%;
+}
+
+.metrics-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+
+.metrics-section-title {
+  margin: 7px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.metrics-section-description {
+  max-width: 350px;
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: right;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   GRID DE INDICADORES
+====================================================== */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* ======================================================
+   CARD DE INDICADOR
+====================================================== */
+
+.metric-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 176px;
+  padding: 23px 22px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.74),
+      rgba(255, 253, 249, 0.96)
+    );
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-md, 16px);
+
+  box-shadow:
+    0 10px 28px rgba(37, 47, 73, 0.055);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 16px 34px rgba(37, 47, 73, 0.09);
+}
+
+.metric-card::after {
+  content: "";
+
+  position: absolute;
+  top: -42px;
+  right: -42px;
+
+  width: 104px;
+  height: 104px;
+
+  border-radius: 50%;
+
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+/* ======================================================
+   VARIAÇÕES DE COR
+====================================================== */
+
+.metric-card-blue::after {
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+.metric-card-green::after {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.metric-card-yellow::after {
+  background: var(--dashboard-yellow, #ffefc3);
+}
+
+.metric-card-neutral::after {
+  background: var(--dashboard-blue-pale, #cddfe9);
+}
+
+.metric-card-blue {
+  border-top-color: rgba(133, 155, 186, 0.48);
+}
+
+.metric-card-green {
+  border-top-color: rgba(146, 150, 111, 0.55);
+}
+
+.metric-card-yellow {
+  border-top-color: rgba(231, 201, 120, 0.62);
+}
+
+.metric-card-neutral {
+  border-top-color: rgba(64, 77, 119, 0.26);
+}
+
+/* ======================================================
+   CONTEÚDO DOS CARDS
+====================================================== */
+
+.metric-card-header {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-card-marker {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--dashboard-primary, #404d77);
+}
+
+.metric-card-blue .metric-card-marker {
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+.metric-card-green .metric-card-marker {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.metric-card-yellow .metric-card-marker {
+  background: #d3ad4f;
+}
+
+.metric-card-neutral .metric-card-marker {
+  background: var(--dashboard-primary, #404d77);
+}
+
+.metric-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.metric-card-value {
+  position: relative;
+  z-index: 2;
+
+  display: block;
+
+  margin-top: 15px;
+
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.metric-card-description {
+  position: relative;
+  z-index: 2;
+
+  margin: 7px 0 0;
+
+  font-size: 13px;
+  line-height: 1.45;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.metric-card-detail {
+  position: relative;
+  z-index: 2;
+
+  display: block;
+
+  margin-top: auto;
+  padding-top: 13px;
+
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   BARRA DE PROGRESSO
+====================================================== */
+
+.metric-card-progress {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 5px;
+
+  margin-top: 14px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(64, 77, 119, 0.09);
+}
+
+.metric-card-progress-fill {
+  display: block;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: var(--dashboard-primary, #404d77);
+}
+
+.metric-card-green .metric-card-progress-fill {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.metric-card-yellow .metric-card-progress-fill {
+  background: #d3ad4f;
+}
+
+.metric-card-blue .metric-card-progress-fill {
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+/* ======================================================
+   RESPONSIVIDADE DOS INDICADORES
+====================================================== */
+
+@media (max-width: 1180px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .metrics-section-heading {
+    display: block;
+  }
+
+  .metrics-section-description {
+    max-width: none;
+    margin-top: 8px;
+
+    text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    min-height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-card {
+    transition: none;
+  }
+
+  .metric-card:hover {
+    transform: none;
+  }
+}
+
+/* ======================================================
+   PRÓXIMOS PASSOS
+====================================================== */
+
+.next-steps-section {
+  width: 100%;
+
+  padding: 30px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.58),
+      rgba(255, 253, 249, 0.95)
+    );
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-lg, 22px);
+
+  box-shadow:
+    0 12px 34px rgba(37, 47, 73, 0.055);
+}
+
+.next-steps-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+
+  margin-bottom: 22px;
+}
+
+.next-steps-title {
+  margin: 7px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.15;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.next-steps-description {
+  margin: 7px 0 0;
+
+  font-size: 13px;
+  line-height: 1.55;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.next-steps-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 0;
+
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+
+  color: var(--dashboard-primary, #404d77);
+
+  transition:
+    gap 150ms ease,
+    color 150ms ease;
+}
+
+.next-steps-view-all:hover {
+  gap: 11px;
+  color: var(--dashboard-accent-dark, #747a59);
+}
+
+/* ======================================================
+   DISTRIBUIÇÃO
+====================================================== */
+
+.next-steps-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 22px;
+}
+
+.next-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ======================================================
+   ITEM DA LISTA
+====================================================== */
+
+.next-step-item {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 17px;
+
+  min-height: 110px;
+  padding: 18px 20px 18px 14px;
+
+  background: rgba(255, 253, 249, 0.78);
+
+  border: 1px solid rgba(222, 214, 202, 0.86);
+  border-radius: 14px;
+
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.next-step-item:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(174, 190, 213, 0.72);
+
+  box-shadow:
+    0 10px 24px rgba(37, 47, 73, 0.06);
+}
+
+.next-step-indicator {
+  width: 4px;
+  height: 54px;
+
+  border-radius: 999px;
+
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+.next-step-item-urgent .next-step-indicator {
+  background: #b27a67;
+}
+
+.next-step-item-soon .next-step-indicator {
+  background: #d4b45d;
+}
+
+.next-step-item-normal .next-step-indicator {
+  background: var(--dashboard-accent, #92966f);
+}
+
+/* ======================================================
+   CONTEÚDO DA TAREFA
+====================================================== */
+
+.next-step-content {
+  min-width: 0;
+}
+
+.next-step-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  margin-bottom: 7px;
+}
+
+.next-step-category {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.next-step-priority {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.next-step-priority-urgent {
+  color: #8c5545;
+  background: rgba(178, 122, 103, 0.14);
+}
+
+.next-step-priority-soon {
+  color: #846c2c;
+  background: rgba(231, 201, 120, 0.29);
+}
+
+.next-step-priority-normal {
+  color: #616748;
+  background: rgba(146, 150, 111, 0.18);
+}
+
+.next-step-title {
+  margin: 0;
+
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.next-step-description {
+  max-width: 620px;
+  margin: 5px 0 0;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   PRAZO
+====================================================== */
+
+.next-step-deadline {
+  min-width: 105px;
+
+  text-align: right;
+}
+
+.next-step-deadline span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.next-step-deadline strong {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+/* ======================================================
+   PROGRESSO DO CHECKLIST
+====================================================== */
+
+.next-steps-progress {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100%;
+  padding: 25px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(205, 223, 233, 0.28),
+      transparent 40%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(146, 150, 111, 0.13),
+      rgba(255, 253, 249, 0.9)
+    );
+
+  border: 1px solid rgba(146, 150, 111, 0.28);
+  border-radius: 16px;
+}
+
+.next-steps-progress-label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-accent-dark, #747a59);
+}
+
+.next-steps-progress-value {
+  display: block;
+
+  margin-top: 16px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 52px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.next-steps-progress-text {
+  margin: 7px 0 0;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.next-steps-progress-bar {
+  width: 100%;
+  height: 7px;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(64, 77, 119, 0.1);
+}
+
+.next-steps-progress-bar span {
+  display: block;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--dashboard-accent, #92966f),
+      #a7aa88
+    );
+}
+
+.next-steps-progress-message {
+  margin: 18px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.45;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.next-steps-progress-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 40px;
+  padding: 9px 16px;
+  margin-top: auto;
+
+  border-radius: 10px;
+
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+
+  color: #ffffff;
+  background: var(--dashboard-primary, #404d77);
+
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.next-steps-progress-button:hover {
+  background: var(--dashboard-primary-dark, #2f3a5d);
+}
+
+.next-steps-progress-button:active {
+  transform: translateY(1px);
+}
+
+/* ======================================================
+   ESTADO VAZIO
+====================================================== */
+
+.next-steps-empty {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  min-height: 130px;
+  padding: 24px;
+
+  background: rgba(146, 150, 111, 0.1);
+  border: 1px solid rgba(146, 150, 111, 0.24);
+  border-radius: 14px;
+}
+
+.next-steps-empty-symbol {
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  color: #ffffff;
+  background: var(--dashboard-accent, #92966f);
+}
+
+.next-steps-empty strong {
+  font-size: 14px;
+  color: var(--dashboard-text, #302b27);
+}
+
+.next-steps-empty p {
+  margin: 4px 0 0;
+
+  font-size: 12px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   RESPONSIVIDADE
+====================================================== */
+
+@media (max-width: 1050px) {
+  .next-steps-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .next-steps-progress {
+    min-height: 230px;
+  }
+
+  .next-steps-progress-button {
+    width: fit-content;
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 760px) {
+  .next-steps-section {
+    padding: 24px;
+  }
+
+  .next-steps-heading {
+    align-items: flex-start;
+  }
+
+  .next-step-item {
+    grid-template-columns: 4px minmax(0, 1fr);
+  }
+
+  .next-step-deadline {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .next-steps-section {
     padding: 20px;
+    border-radius: 18px;
+  }
+
+  .next-steps-heading {
+    display: block;
+  }
+
+  .next-steps-view-all {
+    margin-top: 10px;
+  }
+
+  .next-step-item {
+    padding: 17px 16px 17px 12px;
+  }
+
+  .next-step-meta {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-step-item,
+  .next-steps-view-all,
+  .next-steps-progress-button {
+    transition: none;
+  }
+
+  .next-step-item:hover {
+    transform: none;
+  }
+}
+
+/* ======================================================
+   GRID DOS RESUMOS
+====================================================== */
+
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  width: 100%;
+}
+
+/* ======================================================
+   CARD BASE DOS RESUMOS
+====================================================== */
+
+.summary-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  padding: 28px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 253, 249, 0.96)
+    );
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-lg, 22px);
+
+  box-shadow:
+    0 12px 34px rgba(37, 47, 73, 0.055);
+}
+
+.summary-card::before {
+  content: "";
+
+  position: absolute;
+  top: -90px;
+  right: -90px;
+
+  width: 190px;
+  height: 190px;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.guest-summary::before {
+  background: rgba(174, 190, 213, 0.13);
+}
+
+.financial-summary::before {
+  background: rgba(255, 239, 195, 0.26);
+}
+
+/* ======================================================
+   CABEÇALHO DOS RESUMOS
+====================================================== */
+
+.summary-card-header {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.summary-card-title {
+  margin: 7px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.summary-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  flex-shrink: 0;
+  padding-top: 6px;
+
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+
+  color: var(--dashboard-primary, #404d77);
+
+  transition:
+    gap 150ms ease,
+    color 150ms ease;
+}
+
+.summary-card-link:hover {
+  gap: 10px;
+  color: var(--dashboard-accent-dark, #747a59);
+}
+
+/* ======================================================
+   RESUMO DE CONVIDADOS
+====================================================== */
+
+.guest-summary-main {
+  position: relative;
+  z-index: 2;
+
+  margin-top: 29px;
+}
+
+.guest-summary-total {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+}
+
+.guest-summary-total strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 50px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.guest-summary-total span {
+  max-width: 150px;
+
+  font-size: 12px;
+  line-height: 1.45;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.guest-summary-segmented-bar {
+  display: flex;
+
+  width: 100%;
+  height: 9px;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(64, 77, 119, 0.07);
+}
+
+.guest-segment {
+  display: block;
+  height: 100%;
+}
+
+.guest-segment-confirmed {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.guest-segment-pending {
+  background: #d9b95e;
+}
+
+.guest-segment-declined {
+  background: #b78473;
+}
+
+/* ======================================================
+   LISTA DE CONVIDADOS
+====================================================== */
+
+.guest-summary-list {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  margin-top: 23px;
+}
+
+.guest-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  min-height: 60px;
+
+  border-bottom: 1px solid rgba(222, 214, 202, 0.7);
+}
+
+.guest-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.guest-summary-row-label {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.guest-summary-row-label > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.guest-summary-row-label strong {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.guest-summary-row-label div span {
+  margin-top: 2px;
+
+  font-size: 10px;
+  line-height: 1.35;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.guest-status-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+}
+
+.guest-status-confirmed {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.guest-status-pending {
+  background: #d9b95e;
+}
+
+.guest-status-declined {
+  background: #b78473;
+}
+
+.guest-summary-value {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 400;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+/* ======================================================
+   RODAPÉ DOS CONVIDADOS
+====================================================== */
+
+.guest-summary-footer {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding-top: 19px;
+  margin-top: auto;
+
+  border-top: 1px solid rgba(222, 214, 202, 0.75);
+}
+
+.guest-summary-footer p {
+  margin: 0;
+
+  font-size: 11px;
+  line-height: 1.45;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.guest-summary-footer p strong {
+  color: var(--dashboard-text, #302b27);
+}
+
+.guest-summary-reminder {
+  flex-shrink: 0;
+
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+/* ======================================================
+   RESUMO FINANCEIRO
+====================================================== */
+
+.financial-summary-main {
+  position: relative;
+  z-index: 2;
+
+  margin-top: 29px;
+}
+
+.financial-summary-label {
+  display: block;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.financial-summary-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+
+  margin-top: 8px;
+}
+
+.financial-summary-value-row strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 50px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.financial-summary-value-row span {
+  font-size: 12px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   PROGRESSO FINANCEIRO
+====================================================== */
+
+.financial-summary-progress {
+  display: flex;
+
+  width: 100%;
+  height: 9px;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(64, 77, 119, 0.07);
+}
+
+.financial-progress-paid {
+  display: block;
+  height: 100%;
+
+  background: var(--dashboard-accent, #92966f);
+}
+
+.financial-progress-committed {
+  display: block;
+  height: 100%;
+
+  background: #d9b95e;
+}
+
+.financial-summary-legend {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+
+  margin-top: 9px;
+}
+
+.financial-summary-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 10px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.financial-summary-legend i {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+}
+
+.financial-legend-paid {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.financial-legend-committed {
+  background: #d9b95e;
+}
+
+/* ======================================================
+   LISTA FINANCEIRA
+====================================================== */
+
+.financial-summary-list {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+
+  margin-top: 20px;
+}
+
+.financial-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  min-height: 60px;
+
+  border-bottom: 1px solid rgba(222, 214, 202, 0.7);
+}
+
+.financial-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.financial-summary-row > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.financial-summary-row > div > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.financial-summary-row div strong {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.financial-summary-row div span {
+  margin-top: 2px;
+
+  font-size: 10px;
+  line-height: 1.35;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.financial-summary-row > strong {
+  flex-shrink: 0;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.financial-status-icon {
+  display: grid;
+  place-items: center;
+
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.financial-status-paid {
+  color: #5e6449;
+  background: rgba(146, 150, 111, 0.19);
+}
+
+.financial-status-committed {
+  color: #7e672c;
+  background: rgba(217, 185, 94, 0.2);
+}
+
+.financial-status-available {
+  color: #51657f;
+  background: rgba(174, 190, 213, 0.24);
+}
+
+/* ======================================================
+   RODAPÉ FINANCEIRO
+====================================================== */
+
+.financial-summary-footer {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding-top: 19px;
+  margin-top: auto;
+
+  border-top: 1px solid rgba(222, 214, 202, 0.75);
+}
+
+.financial-summary-footer span {
+  font-size: 11px;
+  line-height: 1.45;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.financial-summary-footer a {
+  flex-shrink: 0;
+
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+/* ======================================================
+   RESPONSIVIDADE DOS RESUMOS
+====================================================== */
+
+@media (max-width: 1050px) {
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .summary-card {
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .summary-card-header {
+    display: block;
+  }
+
+  .summary-card-link {
+    margin-top: 8px;
+  }
+
+  .summary-card-title {
+    font-size: 25px;
+  }
+
+  .guest-summary-total strong,
+  .financial-summary-value-row strong {
+    font-size: 43px;
+  }
+
+  .guest-summary-footer,
+  .financial-summary-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+}
+
+@media (max-width: 420px) {
+  .guest-summary-total,
+  .financial-summary-value-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .guest-summary-row,
+  .financial-summary-row {
+    align-items: flex-start;
+    padding: 13px 0;
+  }
+
+  .guest-summary-row-label,
+  .financial-summary-row > div {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-card-link {
+    transition: none;
+  }
+}
+
+/* ======================================================
+   ACESSIBILIDADE
+====================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-couple,
+  .sidebar-link,
+  .sidebar-link-indicator,
+  .dashboard-button {
+    transition: none;
+  }
+}
+
+/* ======================================================
+   REFINAMENTOS VISUAIS E MICROINTERAÇÕES
+   Esta seção deve permanecer no final do arquivo para
+   sobrescrever apenas os comportamentos necessários.
+====================================================== */
+
+/* ======================================================
+   ANIMAÇÕES
+====================================================== */
+
+@keyframes dashboardFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes metricCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes progressScale {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes countdownFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* ======================================================
+   ENTRADA SUAVE DAS SEÇÕES
+====================================================== */
+
+.dashboard-page > * {
+  opacity: 0;
+  animation: dashboardFadeUp 550ms ease forwards;
+}
+
+.dashboard-page > :nth-child(1) {
+  animation-delay: 40ms;
+}
+
+.dashboard-page > :nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.dashboard-page > :nth-child(3) {
+  animation-delay: 200ms;
+}
+
+.dashboard-page > :nth-child(4) {
+  animation-delay: 280ms;
+}
+
+/* ======================================================
+   ENTRADA ESCALONADA DOS INDICADORES
+====================================================== */
+
+.metric-card {
+  opacity: 0;
+  animation: metricCardEnter 450ms ease forwards;
+}
+
+.metric-card:nth-child(1) {
+  animation-delay: 180ms;
+}
+
+.metric-card:nth-child(2) {
+  animation-delay: 230ms;
+}
+
+.metric-card:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.metric-card:nth-child(4) {
+  animation-delay: 330ms;
+}
+
+/* ======================================================
+   HOVER DOS INDICADORES
+====================================================== */
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(133, 155, 186, 0.5);
+
+  box-shadow:
+    0 18px 38px rgba(37, 47, 73, 0.11);
+}
+
+.metric-card-green:hover {
+  border-color: rgba(146, 150, 111, 0.62);
+}
+
+.metric-card-yellow:hover {
+  border-color: rgba(211, 173, 79, 0.55);
+}
+
+.metric-card::after {
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
+}
+
+.metric-card:hover::after {
+  opacity: 0.28;
+  transform: scale(1.18);
+}
+
+/* ======================================================
+   BARRAS DE PROGRESSO
+   A largura continua sendo definida pelo style inline
+   dos componentes; a animação atua pela escala horizontal.
+====================================================== */
+
+.metric-card-progress-fill,
+.next-steps-progress-bar span {
+  transform: scaleX(0);
+  transform-origin: left;
+  will-change: transform;
+}
+
+.metric-card-progress-fill {
+  animation: progressScale 900ms ease 420ms forwards;
+}
+
+.next-steps-progress-bar span {
+  animation: progressScale 1s ease 520ms forwards;
+}
+
+/* ======================================================
+   CONTAGEM REGRESSIVA
+====================================================== */
+
+.wedding-header-countdown {
+  animation: countdownFloat 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.wedding-header-countdown::after {
+  content: "";
+
+  position: absolute;
+  inset: 9px;
+
+  border: 1px solid rgba(174, 190, 213, 0.28);
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+/* ======================================================
+   ELEMENTO FLORAL OPCIONAL
+   Para exibi-lo:
+   1. adicione <div className="wedding-header-floral" />
+      dentro de .wedding-header;
+   2. salve a arte em:
+      public/images/floral-blue-sage.png
+====================================================== */
+
+.wedding-header-floral {
+  position: absolute;
+  top: -18px;
+  right: 145px;
+  z-index: 1;
+
+  width: 330px;
+  height: 250px;
+
+  background-image: url("/images/floral-blue-sage.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+  opacity: 0.22;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ======================================================
+   PRÓXIMOS PASSOS
+====================================================== */
+
+.next-steps-section {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(174, 190, 213, 0.15),
+      transparent 26%
+    ),
+    linear-gradient(
+      145deg,
+      #fffdf9,
+      #f8f9f7
+    );
+}
+
+.next-step-item:hover {
+  transform: translateX(3px);
+  border-color: rgba(174, 190, 213, 0.72);
+
+  box-shadow:
+    0 10px 24px rgba(37, 47, 73, 0.06);
+}
+
+/* ======================================================
+   SETAS DOS LINKS
+====================================================== */
+
+.summary-card-link span,
+.next-steps-view-all span {
+  display: inline-block;
+  transition: transform 150ms ease;
+}
+
+.summary-card-link:hover span,
+.next-steps-view-all:hover span {
+  transform: translateX(4px);
+}
+
+/* ======================================================
+   RESPONSIVIDADE DOS REFINAMENTOS
+====================================================== */
+
+@media (max-width: 760px) {
+  .wedding-header-floral {
+    right: -80px;
+
+    width: 240px;
+    height: 200px;
+
+    opacity: 0.11;
+  }
+
+  .next-step-item:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ======================================================
+   ACESSIBILIDADE — MOVIMENTO REDUZIDO
+====================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page > *,
+  .metric-card,
+  .metric-card-progress-fill,
+  .next-steps-progress-bar span,
+  .wedding-header-countdown {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .metric-card:hover,
+  .next-step-item:hover {
+    transform: none;
+  }
+
+  .metric-card::after,
+  .summary-card-link span,
+  .next-steps-view-all span {
+    transition: none;
+  }
+}
+
+/* ======================================================
+   PÁGINA DE CHECKLIST
+====================================================== */
+
+.checklist-page {
+  gap: 20px;
+}
+
+/* ======================================================
+   CABEÇALHO DO CHECKLIST
+====================================================== */
+
+.checklist-page-header {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 48px;
+
+  min-height: 230px;
+  padding: 40px 44px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(174, 190, 213, 0.22),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 76% 115%,
+      rgba(146, 150, 111, 0.13),
+      transparent 34%
+    ),
+    var(--dashboard-surface, #fffdf9);
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-lg, 22px);
+
+  box-shadow:
+    0 12px 36px rgba(37, 47, 73, 0.07);
+}
+
+.checklist-page-header::after {
+  content: "";
+
+  position: absolute;
+  top: -80px;
+  right: 260px;
+
+  width: 190px;
+  height: 190px;
+
+  border: 1px solid rgba(174, 190, 213, 0.22);
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.checklist-page-header-content {
+  position: relative;
+  z-index: 2;
+
+  max-width: 670px;
+}
+
+.checklist-page-header-content h1 {
+  margin: 11px 0 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(43px, 5vw, 62px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.035em;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.checklist-page-header-content p {
+  max-width: 570px;
+  margin: 20px 0 0;
+
+  font-size: 14px;
+  line-height: 1.65;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   RESUMO DO CHECKLIST
+====================================================== */
+
+.checklist-page-overview {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.checklist-page-progress-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+
+  border: 1px solid rgba(146, 150, 111, 0.36);
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 253, 249, 0.94),
+      rgba(146, 150, 111, 0.09)
+    );
+
+  box-shadow:
+    inset 0 0 0 7px rgba(205, 223, 233, 0.12),
+    0 14px 30px rgba(37, 47, 73, 0.07);
+}
+
+.checklist-page-progress-circle strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 37px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.checklist-page-progress-circle span {
+  margin-top: 5px;
+
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-page-numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  min-width: 115px;
+}
+
+.checklist-page-numbers div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.checklist-page-numbers strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 400;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.checklist-page-numbers span {
+  font-size: 10px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+/* ======================================================
+   BARRA DE FERRAMENTAS
+====================================================== */
+
+.checklist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px;
+
+  background: rgba(255, 253, 249, 0.78);
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: 16px;
+
+  box-shadow:
+    0 8px 24px rgba(37, 47, 73, 0.04);
+}
+
+.checklist-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  width: min(270px, 100%);
+  min-height: 41px;
+  padding: 0 13px;
+
+  background: #fffdf9;
+  border: 1px solid rgba(222, 214, 202, 0.9);
+  border-radius: 10px;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-search:focus-within {
+  border-color: rgba(133, 155, 186, 0.8);
+  box-shadow:
+    0 0 0 3px rgba(174, 190, 213, 0.18);
+}
+
+.checklist-search input {
+  width: 100%;
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  font-size: 12px;
+
+  color: var(--dashboard-text, #302b27);
+  background: transparent;
+}
+
+.checklist-search input::placeholder {
+  color: #9a958f;
+}
+
+.checklist-filters {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px;
+
+  background: rgba(64, 77, 119, 0.045);
+  border-radius: 10px;
+}
+
+.checklist-filter {
+  min-height: 33px;
+  padding: 6px 11px;
+
+  border: 0;
+  border-radius: 8px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  color: var(--dashboard-text-secondary, #716c65);
+  background: transparent;
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.checklist-filter:hover {
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.checklist-filter-active {
+  color: var(--dashboard-primary, #404d77);
+  background: #fffdf9;
+
+  box-shadow:
+    0 3px 10px rgba(37, 47, 73, 0.07);
+}
+
+.checklist-new-task {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 41px;
+  padding: 8px 15px;
+  margin-left: auto;
+
+  border: 0;
+  border-radius: 10px;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  color: #ffffff;
+  background: var(--dashboard-primary, #404d77);
+
+  cursor: pointer;
+
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.checklist-new-task:hover {
+  background: var(--dashboard-primary-dark, #2f3a5d);
+}
+
+.checklist-new-task:active {
+  transform: translateY(1px);
+}
+
+/* ======================================================
+   GRUPOS
+====================================================== */
+
+.checklist-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.checklist-group {
+  padding: 27px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.64),
+      rgba(255, 253, 249, 0.96)
+    );
+
+  border: 1px solid var(--dashboard-border, #e2ddd4);
+  border-radius: var(--dashboard-radius-lg, 22px);
+
+  box-shadow:
+    0 10px 30px rgba(37, 47, 73, 0.045);
+}
+
+.checklist-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 25px;
+}
+
+.checklist-group-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+
+  min-width: 0;
+}
+
+.checklist-group-marker {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+
+  margin-top: 7px;
+
+  border-radius: 50%;
+
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+.checklist-group-green .checklist-group-marker {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.checklist-group-yellow .checklist-group-marker {
+  background: #d5b45c;
+}
+
+.checklist-group-terracotta .checklist-group-marker {
+  background: #b78473;
+}
+
+.checklist-group-heading h2 {
+  margin: 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.2;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.checklist-group-heading p {
+  margin: 5px 0 0;
+
+  font-size: 11px;
+  line-height: 1.5;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-group-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+.checklist-group-progress span {
+  font-size: 10px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-group-progress strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+
+  color: var(--dashboard-primary, #404d77);
+}
+
+.checklist-group-progress-bar {
+  width: 100%;
+  height: 5px;
+
+  margin-top: 17px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(64, 77, 119, 0.08);
+}
+
+.checklist-group-progress-bar span {
+  display: block;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: var(--dashboard-blue-soft, #aebed5);
+}
+
+.checklist-group-green
+  .checklist-group-progress-bar
+  span {
+  background: var(--dashboard-accent, #92966f);
+}
+
+.checklist-group-yellow
+  .checklist-group-progress-bar
+  span {
+  background: #d5b45c;
+}
+
+.checklist-group-terracotta
+  .checklist-group-progress-bar
+  span {
+  background: #b78473;
+}
+
+/* ======================================================
+   TAREFAS
+====================================================== */
+
+.checklist-group-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-top: 18px;
+}
+
+.checklist-task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 13px;
+
+  padding: 16px;
+
+  background: rgba(255, 253, 249, 0.76);
+  border: 1px solid rgba(222, 214, 202, 0.78);
+  border-radius: 13px;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.checklist-task:hover {
+  transform: translateX(2px);
+
+  border-color: rgba(174, 190, 213, 0.72);
+
+  box-shadow:
+    0 8px 20px rgba(37, 47, 73, 0.055);
+}
+
+.checklist-task-completed {
+  background: rgba(146, 150, 111, 0.055);
+}
+
+.checklist-task-check {
+  display: grid;
+  place-items: center;
+
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  margin-top: 2px;
+
+  border: 1px solid rgba(133, 155, 186, 0.48);
+  border-radius: 7px;
+
+  color: #ffffff;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.checklist-task-completed
+  .checklist-task-check {
+  border-color: var(--dashboard-accent, #92966f);
+  background: var(--dashboard-accent, #92966f);
+}
+
+.checklist-task-progress
+  .checklist-task-check {
+  border-color: #d4b45d;
+}
+
+.checklist-task-progress-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #d4b45d;
+}
+
+.checklist-task-content {
+  min-width: 0;
+}
+
+.checklist-task-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.checklist-task-heading h3 {
+  margin: 0;
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+
+  color: var(--dashboard-text, #302b27);
+}
+
+.checklist-task-completed
+  .checklist-task-heading h3 {
+  color: var(--dashboard-text-secondary, #716c65);
+  text-decoration: line-through;
+}
+
+.checklist-task-heading p {
+  max-width: 700px;
+  margin: 4px 0 0;
+
+  font-size: 11px;
+  line-height: 1.5;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-task-priority {
+  display: inline-flex;
+
+  flex-shrink: 0;
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.checklist-task-priority-high {
+  color: #8c5545;
+  background: rgba(178, 122, 103, 0.14);
+}
+
+.checklist-task-priority-medium {
+  color: #806725;
+  background: rgba(217, 185, 94, 0.2);
+}
+
+.checklist-task-priority-normal {
+  color: #536782;
+  background: rgba(174, 190, 213, 0.22);
+}
+
+.checklist-task-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 10px;
+
+  font-size: 10px;
+  line-height: 1.4;
+
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.checklist-task-meta strong {
+  font-weight: 650;
+  color: var(--dashboard-text, #302b27);
+}
+
+.checklist-task-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 7px;
+  margin-left: 3px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.checklist-task-status-pending {
+  color: #536782;
+  background: rgba(174, 190, 213, 0.21);
+}
+
+.checklist-task-status-progress {
+  color: #806725;
+  background: rgba(217, 185, 94, 0.2);
+}
+
+.checklist-task-status-completed {
+  color: #606646;
+  background: rgba(146, 150, 111, 0.18);
+}
+
+.checklist-task-menu {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 8px;
+
+  font-size: 12px;
+  letter-spacing: 1px;
+
+  color: var(--dashboard-text-secondary, #716c65);
+  background: transparent;
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.checklist-task-menu:hover {
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.14);
+}
+
+.checklist-group-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 10px 4px 0;
+  margin-top: 10px;
+
+  border: 0;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  color: var(--dashboard-primary, #404d77);
+  background: transparent;
+
+  cursor: pointer;
+}
+
+/* ======================================================
+   RESPONSIVIDADE DO CHECKLIST
+====================================================== */
+
+@media (max-width: 1050px) {
+  .checklist-page-header {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .checklist-page-overview {
+    justify-content: flex-start;
+  }
+
+  .checklist-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .checklist-new-task {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .checklist-page-header {
+    padding: 32px;
+  }
+
+  .checklist-filters {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .checklist-filter {
+    flex-shrink: 0;
+  }
+
+  .checklist-new-task {
+    margin-left: auto;
+  }
+
+  .checklist-group {
+    padding: 22px;
+  }
+
+  .checklist-task-heading {
+    display: block;
+  }
+
+  .checklist-task-priority {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .checklist-page-header {
+    padding: 27px 23px;
+    border-radius: 18px;
+  }
+
+  .checklist-page-header-content h1 {
+    font-size: 40px;
+  }
+
+  .checklist-page-overview {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .checklist-page-progress-circle {
+    width: 110px;
+    height: 110px;
+  }
+
+  .checklist-page-numbers {
+    width: 100%;
+  }
+
+  .checklist-toolbar {
+    padding: 11px;
+  }
+
+  .checklist-search {
+    width: 100%;
+  }
+
+  .checklist-new-task {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .checklist-group {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .checklist-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checklist-task {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .checklist-task-menu {
+    grid-column: 2;
+    justify-self: flex-end;
   }
 }
