@@ -6,7 +6,7 @@ import NextSteps, {
 } from "@/components/dashboard/nextsteps";
 import WeddingHeader from "@/components/dashboard/weddingheader";
 
-const WEDDING_DATE = new Date(Date.UTC(2027, 6, 18));
+const WEDDING_DATE = new Date(Date.UTC(2027, 8, 7));
 
 const nextSteps: NextStepItem[] = [
   {
@@ -63,7 +63,7 @@ export default function PainelPage() {
     <div className="dashboard-page">
       <WeddingHeader
         coupleName="Bárbara & Felipe"
-        weddingDate="18 de julho de 2027"
+        weddingDate="07 de Agosto de 2027"
         daysRemaining={daysRemaining}
         confirmedGuests={84}
         pendingGuests={35}

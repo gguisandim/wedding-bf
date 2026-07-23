@@ -7,7 +7,7 @@ const settings: WeddingSettings = {
     brideName: "Bárbara",
     groomName: "Felipe",
 
-    weddingDate: "2027-07-18",
+    weddingDate: "2027-08-07",
     weddingTime: "17:00",
 
     venueName: "Solar do Bosque",

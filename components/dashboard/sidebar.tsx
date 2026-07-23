@@ -29,6 +29,10 @@ const menuGroups: MenuGroup[] = [
         label: "Cronograma",
         href: "/painel/cronograma",
       },
+            {
+        label: "Cerimonia",
+        href: "/painel/cerimonia",
+      },
     ],
   },
   {
