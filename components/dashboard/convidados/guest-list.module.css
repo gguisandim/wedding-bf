@@ -852,3 +852,307 @@
     transition: none;
   }
 }
+/* ======================================================
+   RSVP, VÍNCULOS E SAVE THE DATE
+====================================================== */
+
+.rsvpInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.rsvpInfo > strong {
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--dashboard-text, #302b27);
+}
+
+.rsvpInfo > span {
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.rsvpMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.rsvpMeta code {
+  padding: 4px 6px;
+  border: 1px solid rgba(133, 155, 186, 0.23);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.1);
+}
+
+.saveTheDateBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.saveTheDate-not_ready {
+  color: #8c5545;
+  background: rgba(178, 122, 103, 0.13);
+}
+
+.saveTheDate-ready {
+  color: #806725;
+  background: rgba(217, 185, 94, 0.18);
+}
+
+.saveTheDate-sent {
+  color: #526783;
+  background: rgba(174, 190, 213, 0.2);
+}
+
+.saveTheDate-delivered {
+  color: #5e6448;
+  background: rgba(146, 150, 111, 0.17);
+}
+
+.saveTheDate-returned {
+  color: #8c5545;
+  background: rgba(178, 122, 103, 0.18);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(31, 37, 57, 0.46);
+  backdrop-filter: blur(5px);
+}
+
+.rsvpModal {
+  width: min(100%, 720px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid rgba(222, 214, 202, 0.9);
+  border-radius: 18px;
+  background: #fffdf9;
+  box-shadow: 0 28px 70px rgba(26, 32, 52, 0.25);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 23px 24px 18px;
+  border-bottom: 1px solid rgba(222, 214, 202, 0.68);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(174, 190, 213, 0.18),
+      transparent 38%
+    ),
+    #fffdf9;
+}
+
+.modalHeader h2 {
+  margin: 6px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--dashboard-text, #302b27);
+}
+
+.modalHeader p {
+  margin: 7px 0 0;
+  font-size: 9px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.closeButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  font-size: 18px;
+  color: var(--dashboard-text-secondary, #716c65);
+  background: rgba(64, 77, 119, 0.05);
+  cursor: pointer;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: rgba(247, 245, 239, 0.28);
+}
+
+.modalSection {
+  padding: 18px;
+  border: 1px solid rgba(222, 214, 202, 0.82);
+  border-radius: 14px;
+  background: rgba(255, 253, 249, 0.94);
+}
+
+.modalSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modalSectionHeader h3 {
+  margin: 6px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 400;
+  color: var(--dashboard-text, #302b27);
+}
+
+.groupGuestList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+  border: 1px solid rgba(222, 214, 202, 0.7);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.groupGuestItem {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border-bottom: 1px solid rgba(222, 214, 202, 0.58);
+}
+
+.groupGuestItem:last-child {
+  border-bottom: 0;
+}
+
+.groupGuestItem > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.groupGuestItem > div strong {
+  font-size: 10px;
+  color: var(--dashboard-text, #302b27);
+}
+
+.groupGuestItem > div span {
+  margin-top: 3px;
+  font-size: 8px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.groupConfirmationActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.groupConfirmationActions button {
+  min-height: 33px;
+  padding: 6px 10px;
+  border: 1px solid rgba(133, 155, 186, 0.28);
+  border-radius: 8px;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.1);
+  cursor: pointer;
+}
+
+.groupConfirmationActions .declineGroupButton {
+  color: #8c5545;
+  border-color: rgba(178, 122, 103, 0.23);
+  background: rgba(178, 122, 103, 0.08);
+}
+
+.addressCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(133, 155, 186, 0.22);
+  border-radius: 10px;
+  font-style: normal;
+  background: rgba(174, 190, 213, 0.08);
+}
+
+.addressCard strong {
+  font-size: 10px;
+  color: var(--dashboard-text, #302b27);
+}
+
+.addressCard span {
+  font-size: 9px;
+  line-height: 1.55;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.missingAddress {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(178, 122, 103, 0.23);
+  border-radius: 10px;
+  background: rgba(178, 122, 103, 0.07);
+}
+
+.missingAddress strong {
+  font-size: 10px;
+  color: #8c5545;
+}
+
+.missingAddress p {
+  margin: 5px 0 0;
+  font-size: 8px;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+@media (max-width: 760px) {
+  .rsvpModal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modalOverlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modalSectionHeader,
+  .groupGuestItem {
+    align-items: flex-start;
+  }
+
+  .groupGuestItem {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .groupGuestItem > .confirmationBadge {
+    grid-column: 2;
+    justify-self: flex-start;
+  }
+}

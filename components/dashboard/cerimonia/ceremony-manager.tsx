@@ -25,6 +25,12 @@ export type CeremonyBlockStatus =
   | "confirmed"
   | "attention";
 
+export type CeremonyChecklistItem = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
+
 export type CeremonyBlock = {
   id: string;
   time: string;
@@ -39,6 +45,13 @@ export type CeremonyBlock = {
 
   type: CeremonyBlockType;
   status: CeremonyBlockStatus;
+
+  /*
+   * O checklist pertence ao bloco da cerimônia.
+   * Posteriormente, a página geral de checklist poderá
+   * reunir estes itens sem duplicá-los no banco.
+   */
+  checklist: CeremonyChecklistItem[];
 };
 
 type CeremonyManagerProps = {
@@ -181,13 +194,43 @@ function addMinutesToTime(
   ).padStart(2, "0")}`;
 }
 
+function getChecklistProgress(
+  checklist: CeremonyChecklistItem[],
+) {
+  const total = checklist.length;
+
+  const completed = checklist.filter(
+    (item) => item.completed,
+  ).length;
+
+  return {
+    total,
+    completed,
+    pending: total - completed,
+    percentage:
+      total > 0
+        ? Math.round(
+            (completed / total) * 100,
+          )
+        : 0,
+  };
+}
+
 export default function CeremonyManager({
   initialBlocks,
 }: CeremonyManagerProps) {
   const [blocks, setBlocks] =
-    useState<CeremonyBlock[]>(
-      initialBlocks,
+    useState<CeremonyBlock[]>(() =>
+      initialBlocks.map((block) => ({
+        ...block,
+        checklist: block.checklist ?? [],
+      })),
     );
+
+  const [
+    checklistDrafts,
+    setChecklistDrafts,
+  ] = useState<Record<string, string>>({});
 
   const [form, setForm] =
     useState<BlockFormState>(
@@ -227,15 +270,15 @@ export default function CeremonyManager({
       block.status === "confirmed",
   ).length;
 
-  const attentionCount = blocks.filter(
-    (block) =>
-      block.status === "attention",
-  ).length;
-
-  const unassignedCount = blocks.filter(
-    (block) =>
-      !block.responsible.trim(),
-  ).length;
+  const pendingChecklistCount =
+    blocks.reduce(
+      (total, block) =>
+        total +
+        getChecklistProgress(
+          block.checklist,
+        ).pending,
+      0,
+    );
 
   function showFeedback(
     message: string,
@@ -364,6 +407,14 @@ export default function CeremonyManager({
 
         type: form.type,
         status: form.status,
+
+        checklist:
+          form.id
+            ? blocks.find(
+                (block) =>
+                  block.id === form.id,
+              )?.checklist ?? []
+            : [],
       };
 
     if (form.id) {
@@ -439,6 +490,14 @@ export default function CeremonyManager({
           ),
 
           status: "planned",
+
+          checklist: block.checklist.map(
+            (item, itemIndex) => ({
+              ...item,
+              id: `checklist-${Date.now()}-${itemIndex}`,
+              completed: false,
+            }),
+          ),
         };
 
       const nextBlocks = [
@@ -456,6 +515,152 @@ export default function CeremonyManager({
 
     showFeedback(
       "Bloco duplicado.",
+    );
+  }
+
+  function updateChecklistDraft(
+    blockId: string,
+    value: string,
+  ) {
+    setChecklistDrafts((current) => ({
+      ...current,
+      [blockId]: value,
+    }));
+  }
+
+  function addChecklistItem(
+    blockId: string,
+  ) {
+    const title =
+      checklistDrafts[blockId]
+        ?.trim();
+
+    if (!title) {
+      return;
+    }
+
+    const newItem: CeremonyChecklistItem = {
+      id: `checklist-${Date.now()}`,
+      title,
+      completed: false,
+    };
+
+    setBlocks((currentBlocks) =>
+      currentBlocks.map((block) =>
+        block.id === blockId
+          ? {
+              ...block,
+              checklist: [
+                ...block.checklist,
+                newItem,
+              ],
+            }
+          : block,
+      ),
+    );
+
+    setChecklistDrafts((current) => ({
+      ...current,
+      [blockId]: "",
+    }));
+
+    showFeedback(
+      "Tarefa adicionada ao checklist.",
+    );
+  }
+
+  function toggleChecklistItem(
+    blockId: string,
+    itemId: string,
+  ) {
+    setBlocks((currentBlocks) =>
+      currentBlocks.map((block) =>
+        block.id === blockId
+          ? {
+              ...block,
+              checklist:
+                block.checklist.map(
+                  (item) =>
+                    item.id === itemId
+                      ? {
+                          ...item,
+                          completed:
+                            !item.completed,
+                        }
+                      : item,
+                ),
+            }
+          : block,
+      ),
+    );
+  }
+
+  function editChecklistItem(
+    blockId: string,
+    item: CeremonyChecklistItem,
+  ) {
+    const nextTitle =
+      window
+        .prompt(
+          "Edite o nome da tarefa:",
+          item.title,
+        )
+        ?.trim();
+
+    if (
+      !nextTitle ||
+      nextTitle === item.title
+    ) {
+      return;
+    }
+
+    setBlocks((currentBlocks) =>
+      currentBlocks.map((block) =>
+        block.id === blockId
+          ? {
+              ...block,
+              checklist:
+                block.checklist.map(
+                  (currentItem) =>
+                    currentItem.id ===
+                    item.id
+                      ? {
+                          ...currentItem,
+                          title: nextTitle,
+                        }
+                      : currentItem,
+                ),
+            }
+          : block,
+      ),
+    );
+
+    showFeedback(
+      "Tarefa do checklist atualizada.",
+    );
+  }
+
+  function deleteChecklistItem(
+    blockId: string,
+    itemId: string,
+  ) {
+    setBlocks((currentBlocks) =>
+      currentBlocks.map((block) =>
+        block.id === blockId
+          ? {
+              ...block,
+              checklist:
+                block.checklist.filter(
+                  (item) =>
+                    item.id !== itemId,
+                ),
+            }
+          : block,
+      ),
+    );
+
+    showFeedback(
+      "Tarefa removida do checklist.",
     );
   }
 
@@ -721,12 +926,11 @@ export default function CeremonyManager({
 
             <div>
               <strong>
-                {attentionCount +
-                  unassignedCount}
+                {pendingChecklistCount}
               </strong>
 
               <span>
-                Pendências encontradas
+                Tarefas pendentes
               </span>
             </div>
           </article>
@@ -1012,6 +1216,223 @@ export default function CeremonyManager({
                           </div>
                         </div>
                       )}
+
+                      <section
+                        className={
+                          styles.checklistSection
+                        }
+                        aria-label={`Checklist de ${block.title}`}
+                      >
+                        <header
+                          className={
+                            styles.checklistHeader
+                          }
+                        >
+                          <div>
+                            <span
+                              className={
+                                styles.checklistEyebrow
+                              }
+                            >
+                              Checklist do momento
+                            </span>
+
+                            <strong>
+                              {
+                                getChecklistProgress(
+                                  block.checklist,
+                                ).completed
+                              }{" "}
+                              de{" "}
+                              {
+                                getChecklistProgress(
+                                  block.checklist,
+                                ).total
+                              }{" "}
+                              concluídas
+                            </strong>
+                          </div>
+
+                          <span
+                            className={
+                              styles.checklistPercentage
+                            }
+                          >
+                            {
+                              getChecklistProgress(
+                                block.checklist,
+                              ).percentage
+                            }
+                            %
+                          </span>
+                        </header>
+
+                        <div
+                          className={
+                            styles.checklistProgressTrack
+                          }
+                          aria-hidden="true"
+                        >
+                          <span
+                            style={{
+                              width: `${getChecklistProgress(
+                                block.checklist,
+                              ).percentage}%`,
+                            }}
+                          />
+                        </div>
+
+                        {block.checklist.length >
+                        0 ? (
+                          <div
+                            className={
+                              styles.checklistItems
+                            }
+                          >
+                            {block.checklist.map(
+                              (item) => (
+                                <div
+                                  key={item.id}
+                                  className={`${styles.checklistItem} ${
+                                    item.completed
+                                      ? styles.checklistItemCompleted
+                                      : ""
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    className={
+                                      styles.checklistToggle
+                                    }
+                                    aria-label={
+                                      item.completed
+                                        ? `Marcar ${item.title} como pendente`
+                                        : `Concluir ${item.title}`
+                                    }
+                                    aria-pressed={
+                                      item.completed
+                                    }
+                                    onClick={() =>
+                                      toggleChecklistItem(
+                                        block.id,
+                                        item.id,
+                                      )
+                                    }
+                                  >
+                                    {item.completed
+                                      ? "✓"
+                                      : ""}
+                                  </button>
+
+                                  <span
+                                    className={
+                                      styles.checklistItemTitle
+                                    }
+                                  >
+                                    {item.title}
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    className={
+                                      styles.checklistEditButton
+                                    }
+                                    onClick={() =>
+                                      editChecklistItem(
+                                        block.id,
+                                        item,
+                                      )
+                                    }
+                                  >
+                                    Editar
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className={
+                                      styles.checklistDeleteButton
+                                    }
+                                    aria-label={`Excluir ${item.title}`}
+                                    onClick={() =>
+                                      deleteChecklistItem(
+                                        block.id,
+                                        item.id,
+                                      )
+                                    }
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          <p
+                            className={
+                              styles.emptyChecklist
+                            }
+                          >
+                            Nenhuma tarefa criada para
+                            este momento.
+                          </p>
+                        )}
+
+                        <div
+                          className={
+                            styles.checklistComposer
+                          }
+                        >
+                          <input
+                            type="text"
+                            value={
+                              checklistDrafts[
+                                block.id
+                              ] ?? ""
+                            }
+                            placeholder="Adicionar uma tarefa..."
+                            onChange={(event) =>
+                              updateChecklistDraft(
+                                block.id,
+                                event.target
+                                  .value,
+                              )
+                            }
+                            onKeyDown={(event) => {
+                              if (
+                                event.key ===
+                                "Enter"
+                              ) {
+                                event.preventDefault();
+
+                                addChecklistItem(
+                                  block.id,
+                                );
+                              }
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addChecklistItem(
+                                block.id,
+                              )
+                            }
+                          >
+                            + Adicionar
+                          </button>
+                        </div>
+
+                        <p
+                          className={
+                            styles.checklistSourceNote
+                          }
+                        >
+                          Estas tarefas poderão aparecer
+                          também no checklist geral do
+                          casamento.
+                        </p>
+                      </section>
                     </div>
 
                     <footer
