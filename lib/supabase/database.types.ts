@@ -53,6 +53,58 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_table_assignments: {
+        Row: {
+          created_at: string
+          guest_id: string
+          id: string
+          seat_number: number | null
+          table_id: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          guest_id: string
+          id?: string
+          seat_number?: number | null
+          table_id: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string
+          id?: string
+          seat_number?: number | null
+          table_id?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_table_assignments_guest_fk"
+            columns: ["guest_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "guest_table_assignments_table_fk"
+            columns: ["table_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "seating_tables"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "guest_table_assignments_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guests: {
         Row: {
           confirmation_status: Database["public"]["Enums"]["guest_confirmation_status"]
@@ -196,6 +248,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "invitation_groups_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seating_tables: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          position_x: number
+          position_y: number
+          rotation: number
+          shape: string
+          sort_order: number
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          position_x?: number
+          position_y?: number
+          rotation?: number
+          shape?: string
+          sort_order?: number
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          position_x?: number
+          position_y?: number
+          rotation?: number
+          shape?: string
+          sort_order?: number
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seating_tables_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"

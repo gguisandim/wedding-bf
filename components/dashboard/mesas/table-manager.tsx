@@ -1,317 +1,392 @@
 "use client";
 
 import {
-  type CSSProperties,
+  type DragEvent,
   type FormEvent,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+
+import {
+  assignGuestToTableAction,
+  createSeatingTableAction,
+  deleteSeatingTableAction,
+  unassignGuestFromTableAction,
+  updateSeatingTableAction,
+  updateTablePositionAction,
+} from "@/lib/actions/tables";
 
 import styles from "./table-manager.module.css";
 
-export type GuestRSVPStatus =
-  | "confirmed"
-  | "pending"
-  | "declined";
-
-export type TableShape =
+export type SeatingTableShape =
   | "round"
-  | "rectangle";
+  | "rectangular"
+  | "square";
 
-export type TableGuest = {
+export type SeatingGuest = {
   id: string;
   name: string;
-  invitationName: string;
-  relationship?: string;
-  status: GuestRSVPStatus;
-  tableId: string | null;
+  preferredName?: string;
+  groupName: string;
+
+  side:
+    | "bride"
+    | "groom"
+    | "both";
+
+  confirmation:
+    | "confirmed"
+    | "pending"
+    | "declined";
+
+  isPrimary: boolean;
+  isChild: boolean;
+
+  tableId?: string;
 };
 
-export type WeddingTable = {
+export type SeatingTable = {
   id: string;
   name: string;
-  shape: TableShape;
+  shape: SeatingTableShape;
   capacity: number;
+
   positionX: number;
   positionY: number;
+  rotation: number;
+
+  notes?: string;
 };
 
 type TableManagerProps = {
-  initialGuests: TableGuest[];
-  initialTables: WeddingTable[];
+  initialTables: SeatingTable[];
+  initialGuests: SeatingGuest[];
+  brideName: string;
+  groomName: string;
 };
 
-type ViewMode =
-  | "map"
-  | "list";
+type ViewMode = "map" | "list";
 
-type TableFormState = {
-  id: string | null;
+type TableForm = {
+  id?: string;
   name: string;
-  shape: TableShape;
-  capacity: number;
+  shape: SeatingTableShape;
+  capacity: string;
+  notes: string;
+
+  positionX: number;
+  positionY: number;
+  rotation: number;
 };
 
-type TableOccupancyStatus =
-  | "available"
-  | "full"
-  | "empty";
+const shapeLabels:
+  Record<
+    SeatingTableShape,
+    string
+  > = {
+    round: "Redonda",
+    rectangular: "Retangular",
+    square: "Quadrada",
+  };
 
-const emptyTableForm: TableFormState = {
-  id: null,
-  name: "",
-  shape: "round",
-  capacity: 8,
-};
+const confirmationLabels = {
+  confirmed: "Confirmado",
+  pending: "Aguardando",
+  declined: "Recusou",
+} as const;
 
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
+function createEmptyForm(
+  tableCount: number,
+): TableForm {
+  const column =
+    tableCount % 4;
 
-function getRelationshipLabel(
-  guest: TableGuest,
-) {
-  return (
-    guest.relationship ||
-    guest.invitationName
-  );
-}
-
-function getOccupancyStatus(
-  occupied: number,
-  capacity: number,
-): TableOccupancyStatus {
-  if (occupied === 0) {
-    return "empty";
-  }
-
-  if (occupied >= capacity) {
-    return "full";
-  }
-
-  return "available";
-}
-
-function getSeatStyle(
-  index: number,
-  total: number,
-  shape: TableShape,
-): CSSProperties {
-  const angle =
-    (Math.PI * 2 * index) /
-      Math.max(total, 1) -
-    Math.PI / 2;
-
-  const radiusX =
-    shape === "round" ? 43 : 47;
-
-  const radiusY =
-    shape === "round" ? 41 : 34;
-
-  const left =
-    50 + Math.cos(angle) * radiusX;
-
-  const top =
-    50 + Math.sin(angle) * radiusY;
+  const row =
+    Math.floor(tableCount / 4) % 3;
 
   return {
-    left: `${left}%`,
-    top: `${top}%`,
+    name:
+      `Mesa ${tableCount + 1}`,
+    shape: "round",
+    capacity: "8",
+    notes: "",
+
+    positionX:
+      16 + column * 23,
+
+    positionY:
+      20 + row * 31,
+
+    rotation: 0,
   };
 }
 
-function getStatusLabel(
-  status: TableOccupancyStatus,
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase(
+      "pt-BR",
+    );
+}
+
+function clamp(
+  value: number,
+  min: number,
+  max: number,
 ) {
-  if (status === "full") {
-    return "Completa";
-  }
-
-  if (status === "empty") {
-    return "Vazia";
-  }
-
-  return "Disponível";
+  return Math.min(
+    max,
+    Math.max(min, value),
+  );
 }
 
 export default function TableManager({
-  initialGuests,
   initialTables,
+  initialGuests,
+  brideName,
+  groomName,
 }: TableManagerProps) {
-  const [guests, setGuests] =
-    useState<TableGuest[]>(initialGuests);
+  const router = useRouter();
 
-  const [tables, setTables] =
-    useState<WeddingTable[]>(initialTables);
+  const floorRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
 
-  const [viewMode, setViewMode] =
-    useState<ViewMode>("map");
+  const [
+    tables,
+    setTables,
+  ] = useState<SeatingTable[]>(
+    initialTables,
+  );
+
+  const [
+    guests,
+    setGuests,
+  ] = useState<SeatingGuest[]>(
+    initialGuests,
+  );
+
+  const [
+    viewMode,
+    setViewMode,
+  ] = useState<ViewMode>("map");
 
   const [
     selectedTableId,
     setSelectedTableId,
   ] = useState<string | null>(
-    initialTables[0]?.id ?? null,
+    initialTables[0]?.id ??
+      null,
   );
 
-  const [search, setSearch] =
-    useState("");
+  const [
+    selectedGuestId,
+    setSelectedGuestId,
+  ] = useState("");
 
-  const [feedback, setFeedback] =
-    useState<string | null>(null);
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false);
+  const [
+    isModalOpen,
+    setIsModalOpen,
+  ] = useState(false);
 
-  const [tableForm, setTableForm] =
-    useState<TableFormState>(
-      emptyTableForm,
-    );
-
-  const [formError, setFormError] =
-    useState("");
-
-  const confirmedGuests = useMemo(
+  const [
+    tableForm,
+    setTableForm,
+  ] = useState<TableForm>(
     () =>
-      guests.filter(
-        (guest) =>
-          guest.status === "confirmed",
+      createEmptyForm(
+        initialTables.length,
       ),
-    [guests],
   );
 
-  const pendingGuests = useMemo(
-    () =>
-      guests.filter(
-        (guest) =>
-          guest.status === "pending",
-      ),
-    [guests],
+  const [
+    isSaving,
+    setIsSaving,
+  ] = useState(false);
+
+  const [
+    activeGuestId,
+    setActiveGuestId,
+  ] = useState<string | null>(
+    null,
   );
 
-  const validTableIds = useMemo(
-    () =>
-      new Set(
-        tables.map((table) => table.id),
-      ),
-    [tables],
+  const [
+    activeTableId,
+    setActiveTableId,
+  ] = useState<string | null>(
+    null,
   );
 
-  const allocatedGuests = useMemo(
-    () =>
-      confirmedGuests.filter(
-        (guest) =>
-          guest.tableId &&
-          validTableIds.has(guest.tableId),
-      ),
-    [
-      confirmedGuests,
-      validTableIds,
-    ],
+  const [
+    draggingTableId,
+    setDraggingTableId,
+  ] = useState<string | null>(
+    null,
   );
 
-  const unallocatedGuests = useMemo(
-    () =>
-      confirmedGuests.filter(
-        (guest) =>
-          !guest.tableId ||
-          !validTableIds.has(
-            guest.tableId,
-          ),
-      ),
-    [
-      confirmedGuests,
-      validTableIds,
-    ],
+  const [
+    feedback,
+    setFeedback,
+  ] = useState<string | null>(
+    null,
   );
 
-  const filteredUnallocatedGuests =
-    useMemo(() => {
-      const normalizedSearch = search
-        .trim()
-        .toLocaleLowerCase("pt-BR");
+  const [
+    mounted,
+    setMounted,
+  ] = useState(false);
 
-      if (!normalizedSearch) {
-        return unallocatedGuests;
-      }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-      return unallocatedGuests.filter(
-        (guest) =>
-          guest.name
-            .toLocaleLowerCase("pt-BR")
-            .includes(normalizedSearch) ||
-          guest.invitationName
-            .toLocaleLowerCase("pt-BR")
-            .includes(normalizedSearch) ||
-          guest.relationship
-            ?.toLocaleLowerCase("pt-BR")
-            .includes(normalizedSearch),
+  useEffect(() => {
+    setTables(initialTables);
+  }, [initialTables]);
+
+  useEffect(() => {
+    setGuests(initialGuests);
+  }, [initialGuests]);
+
+  useEffect(() => {
+    if (
+      selectedTableId &&
+      !tables.some(
+        (table) =>
+          table.id ===
+          selectedTableId,
+      )
+    ) {
+      setSelectedTableId(
+        tables[0]?.id ??
+          null,
       );
-    }, [
-      search,
-      unallocatedGuests,
-    ]);
-
-  const guestsByTable = useMemo(() => {
-    const groupedGuests = new Map<
-      string,
-      TableGuest[]
-    >();
-
-    tables.forEach((table) => {
-      groupedGuests.set(table.id, []);
-    });
-
-    confirmedGuests.forEach((guest) => {
-      if (
-        guest.tableId &&
-        groupedGuests.has(guest.tableId)
-      ) {
-        groupedGuests
-          .get(guest.tableId)
-          ?.push(guest);
-      }
-    });
-
-    return groupedGuests;
+    }
   }, [
-    confirmedGuests,
+    selectedTableId,
     tables,
   ]);
 
   const selectedTable =
-    tables.find(
-      (table) =>
-        table.id === selectedTableId,
-    ) ?? null;
+    useMemo(
+      () =>
+        tables.find(
+          (table) =>
+            table.id ===
+            selectedTableId,
+        ) ?? null,
+      [
+        tables,
+        selectedTableId,
+      ],
+    );
 
-  const selectedTableGuests =
-    selectedTable
-      ? guestsByTable.get(
-          selectedTable.id,
-        ) ?? []
-      : [];
+  const assignedGuests =
+    useMemo(
+      () =>
+        guests.filter(
+          (guest) =>
+            guest.tableId ===
+            selectedTableId,
+        ),
+      [
+        guests,
+        selectedTableId,
+      ],
+    );
 
-  const totalCapacity = tables.reduce(
-    (total, table) =>
-      total + table.capacity,
-    0,
-  );
+  const unassignedGuests =
+    useMemo(() => {
+      const normalizedSearch =
+        search
+          .trim()
+          .toLocaleLowerCase(
+            "pt-BR",
+          );
 
-  const totalOccupancyPercentage =
-    totalCapacity > 0
-      ? Math.round(
-          (allocatedGuests.length /
-            totalCapacity) *
-            100,
-        )
-      : 0;
+      return guests.filter(
+        (guest) => {
+          if (
+            guest.tableId ||
+            guest.confirmation ===
+              "declined"
+          ) {
+            return false;
+          }
+
+          const searchable = [
+            guest.name,
+            guest.preferredName,
+            guest.groupName,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLocaleLowerCase(
+              "pt-BR",
+            );
+
+          return (
+            normalizedSearch
+              .length === 0 ||
+            searchable.includes(
+              normalizedSearch,
+            )
+          );
+        },
+      );
+    }, [
+      guests,
+      search,
+    ]);
+
+  const occupiedSeats =
+    guests.filter(
+      (guest) =>
+        Boolean(guest.tableId),
+    ).length;
+
+  const confirmedGuests =
+    guests.filter(
+      (guest) =>
+        guest.confirmation ===
+        "confirmed",
+    ).length;
+
+  const totalCapacity =
+    tables.reduce(
+      (total, table) =>
+        total + table.capacity,
+      0,
+    );
+
+  const unassignedConfirmed =
+    guests.filter(
+      (guest) =>
+        guest.confirmation ===
+          "confirmed" &&
+        !guest.tableId,
+    ).length;
+
+  const sideLabels = {
+    bride: brideName,
+    groom: groomName,
+    both: "Casal",
+  } as const;
 
   function showFeedback(
     message: string,
@@ -320,304 +395,792 @@ export default function TableManager({
 
     window.setTimeout(() => {
       setFeedback(null);
-    }, 2800);
+    }, 3000);
   }
 
-  function assignGuestToTable(
-    guestId: string,
-    tableId: string | null =
-      selectedTableId,
-  ) {
-    if (!tableId) {
-      showFeedback(
-        "Selecione uma mesa antes de alocar o convidado.",
-      );
-
-      return;
-    }
-
-    const table = tables.find(
-      (item) => item.id === tableId,
-    );
-
-    if (!table) {
-      showFeedback(
-        "A mesa selecionada não foi encontrada.",
-      );
-
-      return;
-    }
-
-    const occupiedPlaces =
-      guestsByTable.get(table.id)
-        ?.length ?? 0;
-
-    if (
-      occupiedPlaces >= table.capacity
-    ) {
-      showFeedback(
-        `${table.name} já está completa.`,
-      );
-
-      return;
-    }
-
-    const guest = guests.find(
-      (item) => item.id === guestId,
-    );
-
-    if (
-      !guest ||
-      guest.status !== "confirmed"
-    ) {
-      showFeedback(
-        "Somente convidados confirmados podem ser alocados.",
-      );
-
-      return;
-    }
-
-    setGuests((currentGuests) =>
-      currentGuests.map(
-        (currentGuest) =>
-          currentGuest.id === guestId
-            ? {
-                ...currentGuest,
-                tableId,
-              }
-            : currentGuest,
+  function openCreateModal() {
+    window.dispatchEvent(
+      new Event(
+        "dashboard:collapse-sidebar",
       ),
     );
 
-    setSelectedTableId(tableId);
-
-    showFeedback(
-      `${guest.name} foi alocado em ${table.name}.`,
-    );
-  }
-
-  function removeGuestFromTable(
-    guestId: string,
-  ) {
-    const guest = guests.find(
-      (item) => item.id === guestId,
-    );
-
-    setGuests((currentGuests) =>
-      currentGuests.map(
-        (currentGuest) =>
-          currentGuest.id === guestId
-            ? {
-                ...currentGuest,
-                tableId: null,
-              }
-            : currentGuest,
+    setTableForm(
+      createEmptyForm(
+        tables.length,
       ),
     );
 
-    if (guest) {
-      showFeedback(
-        `${guest.name} ficou sem mesa.`,
-      );
-    }
-  }
-
-  function openCreateTableModal() {
-    setTableForm({
-      ...emptyTableForm,
-      name: `Mesa ${
-        tables.length + 1
-      }`,
-    });
-
-    setFormError("");
     setIsModalOpen(true);
   }
 
-  function openEditTableModal(
-    table: WeddingTable,
+  function openEditModal(
+    table: SeatingTable,
   ) {
+    window.dispatchEvent(
+      new Event(
+        "dashboard:collapse-sidebar",
+      ),
+    );
+
     setTableForm({
       id: table.id,
       name: table.name,
       shape: table.shape,
-      capacity: table.capacity,
+      capacity:
+        String(table.capacity),
+      notes:
+        table.notes ?? "",
+
+      positionX:
+        table.positionX,
+      positionY:
+        table.positionY,
+      rotation:
+        table.rotation,
     });
 
-    setFormError("");
     setIsModalOpen(true);
   }
 
-  function closeTableModal() {
-    setIsModalOpen(false);
-    setFormError("");
-    setTableForm(emptyTableForm);
+  function closeModal() {
+    if (!isSaving) {
+      setIsModalOpen(false);
+    }
   }
 
-  function saveTable(
-    event: FormEvent<HTMLFormElement>,
+  async function saveTable(
+    event:
+      FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
-    const normalizedName =
-      tableForm.name.trim();
+    if (isSaving) {
+      return;
+    }
 
-    if (!normalizedName) {
-      setFormError(
-        "Informe um nome para a mesa.",
+    const capacity =
+      Number(
+        tableForm.capacity,
       );
 
+    if (
+      tableForm.name.trim()
+        .length < 2
+    ) {
+      showFeedback(
+        "Informe o nome da mesa.",
+      );
       return;
     }
 
     if (
       !Number.isInteger(
-        tableForm.capacity,
+        capacity,
       ) ||
-      tableForm.capacity < 1 ||
-      tableForm.capacity > 20
+      capacity < 1 ||
+      capacity > 30
     ) {
-      setFormError(
-        "A capacidade deve estar entre 1 e 20 lugares.",
+      showFeedback(
+        "A capacidade deve ficar entre 1 e 30 lugares.",
       );
-
       return;
     }
 
-    if (tableForm.id) {
-      const currentGuests =
-        guestsByTable.get(
-          tableForm.id,
-        ) ?? [];
+    setIsSaving(true);
 
-      if (
-        tableForm.capacity <
-        currentGuests.length
-      ) {
-        setFormError(
-          `Essa mesa possui ${currentGuests.length} pessoas. Remova convidados antes de reduzir a capacidade.`,
+    try {
+      if (tableForm.id) {
+        const result =
+          await updateSeatingTableAction({
+            id: tableForm.id,
+            name:
+              tableForm.name.trim(),
+            shape:
+              tableForm.shape,
+            capacity,
+            notes:
+              tableForm.notes.trim(),
+
+            positionX:
+              tableForm.positionX,
+            positionY:
+              tableForm.positionY,
+            rotation:
+              tableForm.rotation,
+          });
+
+        if (!result.success) {
+          showFeedback(
+            result.message,
+          );
+          return;
+        }
+
+        setTables((current) =>
+          current.map((table) =>
+            table.id ===
+            tableForm.id
+              ? {
+                  ...table,
+                  name:
+                    tableForm.name.trim(),
+                  shape:
+                    tableForm.shape,
+                  capacity,
+                  notes:
+                    tableForm.notes.trim() ||
+                    undefined,
+                }
+              : table,
+          ),
         );
 
-        return;
+        showFeedback(
+          result.message,
+        );
+      } else {
+        const result =
+          await createSeatingTableAction({
+            name:
+              tableForm.name.trim(),
+            shape:
+              tableForm.shape,
+            capacity,
+            notes:
+              tableForm.notes.trim(),
+
+            positionX:
+              tableForm.positionX,
+            positionY:
+              tableForm.positionY,
+            rotation:
+              tableForm.rotation,
+          });
+
+        if (
+          !result.success ||
+          !result.id
+        ) {
+          showFeedback(
+            result.message,
+          );
+          return;
+        }
+
+        const newTable:
+          SeatingTable = {
+          id: result.id,
+          name:
+            tableForm.name.trim(),
+          shape:
+            tableForm.shape,
+          capacity,
+
+          positionX:
+            tableForm.positionX,
+          positionY:
+            tableForm.positionY,
+          rotation:
+            tableForm.rotation,
+
+          notes:
+            tableForm.notes.trim() ||
+            undefined,
+        };
+
+        setTables(
+          (current) => [
+            ...current,
+            newTable,
+          ],
+        );
+
+        setSelectedTableId(
+          newTable.id,
+        );
+
+        showFeedback(
+          result.message,
+        );
       }
 
-      setTables((currentTables) =>
-        currentTables.map((table) =>
-          table.id === tableForm.id
-            ? {
-                ...table,
-                name: normalizedName,
-                shape:
-                  tableForm.shape,
-                capacity:
-                  tableForm.capacity,
-              }
-            : table,
-        ),
+      setIsModalOpen(false);
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao salvar mesa:",
+        error,
       );
 
       showFeedback(
-        `${normalizedName} foi atualizada.`,
+        "Não foi possível salvar a mesa.",
       );
-
-      closeTableModal();
-      return;
+    } finally {
+      setIsSaving(false);
     }
-
-    const tableIndex =
-      tables.length;
-
-    const columns = 4;
-
-    const columnIndex =
-      tableIndex % columns;
-
-    const rowIndex = Math.floor(
-      tableIndex / columns,
-    );
-
-    const newTable: WeddingTable = {
-      id: `table-${Date.now()}`,
-      name: normalizedName,
-      shape: tableForm.shape,
-      capacity: tableForm.capacity,
-      positionX:
-        17 + columnIndex * 22,
-      positionY:
-        24 +
-        (rowIndex % 3) * 31,
-    };
-
-    setTables((currentTables) => [
-      ...currentTables,
-      newTable,
-    ]);
-
-    setSelectedTableId(newTable.id);
-
-    showFeedback(
-      `${newTable.name} foi criada.`,
-    );
-
-    closeTableModal();
   }
 
-  function deleteTable(
-    tableId: string,
+  async function deleteTable(
+    table: SeatingTable,
   ) {
-    const table = tables.find(
-      (item) => item.id === tableId,
-    );
-
-    if (!table) {
-      return;
-    }
-
     const confirmed =
       window.confirm(
-        `Excluir ${table.name}? Os convidados alocados ficarão sem mesa.`,
+        `Excluir ${table.name}? Os convidados ficarão sem mesa.`,
       );
 
     if (!confirmed) {
       return;
     }
 
-    const remainingTables =
-      tables.filter(
-        (item) => item.id !== tableId,
+    setActiveTableId(
+      table.id,
+    );
+
+    try {
+      const result =
+        await deleteSeatingTableAction(
+          table.id,
+        );
+
+      if (!result.success) {
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      setTables((current) =>
+        current.filter(
+          (currentTable) =>
+            currentTable.id !==
+            table.id,
+        ),
       );
 
-    setTables(remainingTables);
+      setGuests((current) =>
+        current.map((guest) =>
+          guest.tableId ===
+          table.id
+            ? {
+                ...guest,
+                tableId: undefined,
+              }
+            : guest,
+        ),
+      );
 
-    setGuests((currentGuests) =>
-      currentGuests.map((guest) =>
-        guest.tableId === tableId
+      showFeedback(
+        result.message,
+      );
+
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao excluir mesa:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível excluir a mesa.",
+      );
+    } finally {
+      setActiveTableId(null);
+    }
+  }
+
+  async function assignGuest(
+    guestId = selectedGuestId,
+  ) {
+    if (
+      !selectedTable ||
+      !guestId ||
+      activeGuestId
+    ) {
+      return;
+    }
+
+    setActiveGuestId(
+      guestId,
+    );
+
+    try {
+      const result =
+        await assignGuestToTableAction({
+          guestId,
+          tableId:
+            selectedTable.id,
+        });
+
+      if (!result.success) {
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      setGuests((current) =>
+        current.map((guest) =>
+          guest.id === guestId
+            ? {
+                ...guest,
+                tableId:
+                  selectedTable.id,
+              }
+            : guest,
+        ),
+      );
+
+      setSelectedGuestId("");
+      showFeedback(
+        result.message,
+      );
+
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao atribuir convidado:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível atribuir o convidado.",
+      );
+    } finally {
+      setActiveGuestId(null);
+    }
+  }
+
+  async function unassignGuest(
+    guestId: string,
+  ) {
+    if (activeGuestId) {
+      return;
+    }
+
+    setActiveGuestId(
+      guestId,
+    );
+
+    try {
+      const result =
+        await unassignGuestFromTableAction({
+          guestId,
+        });
+
+      if (!result.success) {
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      setGuests((current) =>
+        current.map((guest) =>
+          guest.id === guestId
+            ? {
+                ...guest,
+                tableId: undefined,
+              }
+            : guest,
+        ),
+      );
+
+      showFeedback(
+        result.message,
+      );
+
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao remover convidado:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível remover o convidado da mesa.",
+      );
+    } finally {
+      setActiveGuestId(null);
+    }
+  }
+
+  function startDragging(
+    event:
+      DragEvent<HTMLButtonElement>,
+    tableId: string,
+  ) {
+    setDraggingTableId(
+      tableId,
+    );
+
+    event.dataTransfer
+      .setData(
+        "text/plain",
+        tableId,
+      );
+
+    event.dataTransfer
+      .setDragImage(
+        event.currentTarget,
+        event.currentTarget
+          .offsetWidth / 2,
+        event.currentTarget
+          .offsetHeight / 2,
+      );
+  }
+
+  async function dropTable(
+    event:
+      DragEvent<HTMLDivElement>,
+  ) {
+    event.preventDefault();
+
+    const tableId =
+      event.dataTransfer
+        .getData("text/plain") ||
+      draggingTableId;
+
+    const floor =
+      floorRef.current;
+
+    if (!tableId || !floor) {
+      setDraggingTableId(null);
+      return;
+    }
+
+    const currentTable =
+      tables.find(
+        (table) =>
+          table.id === tableId,
+      );
+
+    if (!currentTable) {
+      setDraggingTableId(null);
+      return;
+    }
+
+    const rect =
+      floor.getBoundingClientRect();
+
+    const positionX =
+      clamp(
+        (
+          (event.clientX -
+            rect.left) /
+          rect.width
+        ) * 100,
+        7,
+        93,
+      );
+
+    const positionY =
+      clamp(
+        (
+          (event.clientY -
+            rect.top) /
+          rect.height
+        ) * 100,
+        10,
+        90,
+      );
+
+    const previousX =
+      currentTable.positionX;
+
+    const previousY =
+      currentTable.positionY;
+
+    setTables((current) =>
+      current.map((table) =>
+        table.id === tableId
           ? {
-              ...guest,
-              tableId: null,
+              ...table,
+              positionX,
+              positionY,
             }
-          : guest,
+          : table,
       ),
     );
 
-    if (
-      selectedTableId === tableId
-    ) {
-      setSelectedTableId(
-        remainingTables[0]?.id ?? null,
+    setDraggingTableId(null);
+
+    try {
+      const result =
+        await updateTablePositionAction({
+          tableId,
+          positionX,
+          positionY,
+        });
+
+      if (!result.success) {
+        setTables((current) =>
+          current.map((table) =>
+            table.id === tableId
+              ? {
+                  ...table,
+                  positionX:
+                    previousX,
+                  positionY:
+                    previousY,
+                }
+              : table,
+          ),
+        );
+
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      showFeedback(
+        result.message,
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao mover mesa:",
+        error,
+      );
+
+      setTables((current) =>
+        current.map((table) =>
+          table.id === tableId
+            ? {
+                ...table,
+                positionX:
+                  previousX,
+                positionY:
+                  previousY,
+              }
+            : table,
+        ),
+      );
+
+      showFeedback(
+        "Não foi possível salvar a posição da mesa.",
       );
     }
-
-    showFeedback(
-      `${table.name} foi excluída.`,
-    );
   }
+
+  const modal =
+    isModalOpen ? (
+      <div
+        className={
+          styles.modalOverlay
+        }
+        role="presentation"
+        onMouseDown={(event) => {
+          if (
+            event.target ===
+            event.currentTarget
+          ) {
+            closeModal();
+          }
+        }}
+      >
+        <section
+          className={styles.modal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="table-modal-title"
+        >
+          <header
+            className={
+              styles.modalHeader
+            }
+          >
+            <div>
+              <span
+                className={
+                  styles.eyebrow
+                }
+              >
+                Salão
+              </span>
+
+              <h2 id="table-modal-title">
+                {tableForm.id
+                  ? "Editar mesa"
+                  : "Nova mesa"}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Fechar"
+              onClick={closeModal}
+              disabled={isSaving}
+            >
+              ×
+            </button>
+          </header>
+
+          <form
+            className={styles.form}
+            onSubmit={saveTable}
+          >
+            <div
+              className={
+                styles.formGrid
+              }
+            >
+              <label
+                className={
+                  styles.fullField
+                }
+              >
+                <span>
+                  Nome da mesa
+                </span>
+
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  value={
+                    tableForm.name
+                  }
+                  onChange={(event) =>
+                    setTableForm(
+                      (current) => ({
+                        ...current,
+                        name:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Formato</span>
+
+                <select
+                  value={
+                    tableForm.shape
+                  }
+                  onChange={(event) =>
+                    setTableForm(
+                      (current) => ({
+                        ...current,
+                        shape:
+                          event.target
+                            .value as SeatingTableShape,
+                      }),
+                    )
+                  }
+                >
+                  {Object.entries(
+                    shapeLabels,
+                  ).map(
+                    ([
+                      value,
+                      label,
+                    ]) => (
+                      <option
+                        key={value}
+                        value={value}
+                      >
+                        {label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <label>
+                <span>
+                  Capacidade
+                </span>
+
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  required
+                  value={
+                    tableForm.capacity
+                  }
+                  onChange={(event) =>
+                    setTableForm(
+                      (current) => ({
+                        ...current,
+                        capacity:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+
+              <label
+                className={
+                  styles.fullField
+                }
+              >
+                <span>
+                  Observações
+                </span>
+
+                <textarea
+                  rows={4}
+                  maxLength={500}
+                  placeholder="Ex.: Próxima ao palco, mesa dos avós..."
+                  value={
+                    tableForm.notes
+                  }
+                  onChange={(event) =>
+                    setTableForm(
+                      (current) => ({
+                        ...current,
+                        notes:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+            </div>
+
+            <div
+              className={
+                styles.modalActions
+              }
+            >
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={isSaving}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSaving}
+              >
+                {isSaving
+                  ? "Salvando..."
+                  : "Salvar mesa"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    ) : null;
 
   return (
     <div className={styles.page}>
       {feedback && (
         <div
-          className={styles.feedback}
+          className={
+            styles.feedback
+          }
           role="status"
           aria-live="polite"
         >
@@ -630,958 +1193,392 @@ export default function TableManager({
       )}
 
       <header
-        className={styles.pageHeader}
+        className={
+          styles.pageHeader
+        }
       >
-        <div className={styles.headerCopy}>
-          <span className={styles.eyebrow}>
-            Organização do evento
+        <div
+          className={
+            styles.headerCopy
+          }
+        >
+          <span
+            className={
+              styles.eyebrow
+            }
+          >
+            Organização do salão
           </span>
 
-          <h1>Organização das mesas</h1>
+          <h1>Mesas</h1>
 
           <p>
-            Distribua os convidados
-            confirmados pelo salão e
-            acompanhe os lugares disponíveis
-            em cada mesa.
+            Distribua os convidados,
+            acompanhe a capacidade e
+            arraste as mesas para
+            representar a disposição
+            vista de cima.
           </p>
         </div>
 
-        <div
-          className={styles.headerActions}
+        <button
+          type="button"
+          className={
+            styles.primaryButton
+          }
+          onClick={
+            openCreateModal
+          }
         >
-          <div
-            className={styles.viewToggle}
-            aria-label="Modo de visualização"
-          >
-            <button
-              type="button"
-              className={
-                viewMode === "map"
-                  ? styles.activeView
-                  : ""
-              }
-              aria-pressed={
-                viewMode === "map"
-              }
-              onClick={() =>
-                setViewMode("map")
-              }
-            >
-              <span aria-hidden="true">
-                ◉
-              </span>
-              Mapa
-            </button>
+          <span aria-hidden="true">
+            +
+          </span>
 
-            <button
-              type="button"
-              className={
-                viewMode === "list"
-                  ? styles.activeView
-                  : ""
-              }
-              aria-pressed={
-                viewMode === "list"
-              }
-              onClick={() =>
-                setViewMode("list")
-              }
-            >
-              <span aria-hidden="true">
-                ≡
-              </span>
-              Lista
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className={
-              styles.primaryButton
-            }
-            onClick={
-              openCreateTableModal
-            }
-          >
-            <span aria-hidden="true">
-              +
-            </span>
-
-            Nova mesa
-          </button>
-        </div>
+          Nova mesa
+        </button>
 
         <div
-          className={styles.summaryGrid}
+          className={
+            styles.metrics
+          }
         >
-          <article
-            className={`${styles.summaryCard} ${styles.confirmedSummary}`}
-          >
-            <span
-              className={styles.summaryIcon}
-              aria-hidden="true"
-            >
-              ✓
-            </span>
-
-            <div>
-              <strong>
-                {confirmedGuests.length}
-              </strong>
-
-              <span>
-                Convidados confirmados
-              </span>
-            </div>
+          <article>
+            <span>Mesas</span>
+            <strong>
+              {tables.length}
+            </strong>
           </article>
 
-          <article
-            className={`${styles.summaryCard} ${styles.allocatedSummary}`}
-          >
-            <span
-              className={styles.summaryIcon}
-              aria-hidden="true"
-            >
-              ⌾
+          <article>
+            <span>
+              Lugares disponíveis
             </span>
-
-            <div>
-              <strong>
-                {allocatedGuests.length}
-              </strong>
-
-              <span>
-                Pessoas alocadas
-              </span>
-            </div>
+            <strong>
+              {Math.max(
+                0,
+                totalCapacity -
+                  occupiedSeats,
+              )}
+            </strong>
           </article>
 
-          <article
-            className={`${styles.summaryCard} ${styles.unassignedSummary}`}
-          >
-            <span
-              className={styles.summaryIcon}
-              aria-hidden="true"
-            >
-              !
+          <article>
+            <span>
+              Confirmados
             </span>
-
-            <div>
-              <strong>
-                {
-                  unallocatedGuests.length
-                }
-              </strong>
-
-              <span>
-                Pessoas sem mesa
-              </span>
-            </div>
+            <strong>
+              {confirmedGuests}
+            </strong>
           </article>
 
-          <article
-            className={`${styles.summaryCard} ${styles.capacitySummary}`}
-          >
-            <span
-              className={styles.summaryIcon}
-              aria-hidden="true"
-            >
-              %
+          <article>
+            <span>
+              Confirmados sem mesa
             </span>
-
-            <div>
-              <strong>
-                {
-                  totalOccupancyPercentage
-                }
-                %
-              </strong>
-
-              <span>
-                Ocupação do salão
-              </span>
-            </div>
+            <strong>
+              {unassignedConfirmed}
+            </strong>
           </article>
         </div>
       </header>
 
       <section
-        className={styles.workspace}
+        className={
+          styles.workspace
+        }
       >
-        <aside
-          className={styles.guestPanel}
+        <div
+          className={
+            styles.mainPanel
+          }
         >
           <header
-            className={styles.panelHeader}
+            className={
+              styles.toolbar
+            }
           >
             <div>
               <span
-                className={styles.eyebrow}
-              >
-                Convidados
-              </span>
-
-              <h2
                 className={
-                  styles.panelTitle
+                  styles.eyebrow
                 }
               >
-                Sem mesa
+                Planta do salão
+              </span>
+
+              <h2>
+                Distribuição das mesas
               </h2>
             </div>
 
-            <span
+            <div
               className={
-                styles.panelCount
+                styles.viewSwitch
               }
             >
-              {unallocatedGuests.length}
-            </span>
+              <button
+                type="button"
+                className={
+                  viewMode === "map"
+                    ? styles.activeView
+                    : ""
+                }
+                onClick={() =>
+                  setViewMode(
+                    "map",
+                  )
+                }
+              >
+                Vista superior
+              </button>
+
+              <button
+                type="button"
+                className={
+                  viewMode === "list"
+                    ? styles.activeView
+                    : ""
+                }
+                onClick={() =>
+                  setViewMode(
+                    "list",
+                  )
+                }
+              >
+                Lista
+              </button>
+            </div>
           </header>
 
-          <label
-            className={styles.searchBox}
-          >
-            <span aria-hidden="true">
-              ⌕
-            </span>
-
-            <input
-              type="search"
-              value={search}
-              placeholder="Buscar convidado..."
-              onChange={(event) =>
-                setSearch(
-                  event.target.value,
-                )
+          {tables.length === 0 ? (
+            <div
+              className={
+                styles.emptyState
               }
-            />
-          </label>
+            >
+              <span aria-hidden="true">
+                ◯
+              </span>
 
-          <p
-            className={styles.guestHint}
-          >
-            Selecione uma mesa no mapa e
-            clique em “Adicionar”.
-          </p>
+              <strong>
+                Nenhuma mesa criada
+              </strong>
 
-          <div
-            className={styles.guestList}
-          >
-            {filteredUnallocatedGuests.length >
-            0 ? (
-              filteredUnallocatedGuests.map(
-                (guest) => (
-                  <article
-                    key={guest.id}
-                    className={
-                      styles.guestCard
-                    }
-                  >
-                    <span
-                      className={
-                        styles.guestAvatar
-                      }
-                      aria-hidden="true"
-                    >
-                      {getInitials(
-                        guest.name,
-                      )}
-                    </span>
+              <p>
+                Crie a primeira mesa
+                para começar a organizar
+                o salão.
+              </p>
 
-                    <div
-                      className={
-                        styles.guestIdentity
-                      }
-                    >
-                      <strong>
-                        {guest.name}
-                      </strong>
+              <button
+                type="button"
+                onClick={
+                  openCreateModal
+                }
+              >
+                Criar primeira mesa
+              </button>
+            </div>
+          ) : viewMode === "map" ? (
+            <div
+              ref={floorRef}
+              className={
+                styles.floor
+              }
+              onDragOver={(event) =>
+                event.preventDefault()
+              }
+              onDrop={dropTable}
+            >
+              <div
+                className={
+                  styles.stage
+                }
+              >
+                Palco / cerimônia
+              </div>
 
-                      <span>
-                        {
-                          getRelationshipLabel(
-                            guest,
-                          )
-                        }
-                      </span>
-                    </div>
+              {tables.map(
+                (table) => {
+                  const tableGuests =
+                    guests.filter(
+                      (guest) =>
+                        guest.tableId ===
+                        table.id,
+                    );
 
+                  const isSelected =
+                    table.id ===
+                    selectedTableId;
+
+                  return (
                     <button
+                      key={table.id}
                       type="button"
-                      className={
-                        styles.assignButton
-                      }
-                      disabled={
-                        !selectedTable
-                      }
+                      draggable
+                      className={`${styles.floorTable} ${
+                        styles[
+                          `shape-${table.shape}`
+                        ]
+                      } ${
+                        isSelected
+                          ? styles.selectedFloorTable
+                          : ""
+                      } ${
+                        draggingTableId ===
+                        table.id
+                          ? styles.draggingTable
+                          : ""
+                      }`}
+                      style={{
+                        left:
+                          `${table.positionX}%`,
+                        top:
+                          `${table.positionY}%`,
+                        transform:
+                          `translate(-50%, -50%) rotate(${table.rotation}deg)`,
+                      }}
                       onClick={() =>
-                        assignGuestToTable(
-                          guest.id,
+                        setSelectedTableId(
+                          table.id,
+                        )
+                      }
+                      onDragStart={(
+                        event,
+                      ) =>
+                        startDragging(
+                          event,
+                          table.id,
+                        )
+                      }
+                      onDragEnd={() =>
+                        setDraggingTableId(
+                          null,
                         )
                       }
                     >
-                      Adicionar
+                      <span>
+                        {table.name}
+                      </span>
+
+                      <strong>
+                        {
+                          tableGuests.length
+                        }
+                        /
+                        {table.capacity}
+                      </strong>
+
+                      <small>
+                        Arraste para mover
+                      </small>
                     </button>
-                  </article>
-                ),
-              )
-            ) : (
-              <div
-                className={
-                  styles.guestEmpty
-                }
-              >
-                <span aria-hidden="true">
-                  ✓
-                </span>
-
-                <strong>
-                  Nenhum convidado encontrado
-                </strong>
-
-                <p>
-                  Todos podem já estar
-                  alocados ou a busca não
-                  encontrou resultados.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div
-            className={
-              styles.pendingSection
-            }
-          >
-            <header
+                  );
+                },
+              )}
+            </div>
+          ) : (
+            <div
               className={
-                styles.pendingHeader
+                styles.tableList
               }
             >
-              <div>
-                <strong>
-                  Aguardando confirmação
-                </strong>
+              {tables.map(
+                (table) => {
+                  const tableGuests =
+                    guests.filter(
+                      (guest) =>
+                        guest.tableId ===
+                        table.id,
+                    );
 
-                <span>
-                  Não ocupam lugares nas mesas
-                </span>
-              </div>
-
-              <span>
-                {pendingGuests.length}
-              </span>
-            </header>
-
-            {pendingGuests.length > 0 && (
-              <div
-                className={
-                  styles.pendingList
-                }
-              >
-                {pendingGuests
-                  .slice(0, 4)
-                  .map((guest) => (
-                    <div
-                      key={guest.id}
-                      className={
-                        styles.pendingGuest
+                  return (
+                    <article
+                      key={table.id}
+                      className={`${styles.tableListCard} ${
+                        table.id ===
+                        selectedTableId
+                          ? styles.selectedListCard
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedTableId(
+                          table.id,
+                        )
                       }
                     >
-                      <span
-                        aria-hidden="true"
+                      <div
+                        className={`${styles.tableIcon} ${
+                          styles[
+                            `shape-${table.shape}`
+                          ]
+                        }`}
                       />
 
                       <div>
                         <strong>
-                          {guest.name}
+                          {table.name}
                         </strong>
 
-                        <small>
+                        <span>
                           {
-                            guest.invitationName
+                            shapeLabels[
+                              table.shape
+                            ]
                           }
-                        </small>
+                          {" · "}
+                          {
+                            tableGuests.length
+                          }
+                          /
+                          {table.capacity}
+                          {" lugares"}
+                        </span>
                       </div>
-                    </div>
-                  ))}
 
-                {pendingGuests.length >
-                  4 && (
-                  <small>
-                    +
-                    {pendingGuests.length -
-                      4}{" "}
-                    pessoas aguardando
-                  </small>
-                )}
-              </div>
-            )}
-          </div>
-        </aside>
-
-        <main
-          className={styles.mainPanel}
-        >
-          {viewMode === "map" ? (
-            <>
-              <header
-                className={
-                  styles.mapHeader
-                }
-              >
-                <div>
-                  <span
-                    className={
-                      styles.eyebrow
-                    }
-                  >
-                    Planta do salão
-                  </span>
-
-                  <h2
-                    className={
-                      styles.mapTitle
-                    }
-                  >
-                    Mapa das mesas
-                  </h2>
-                </div>
-
-                <div
-                  className={styles.legend}
-                >
-                  <span
-                    className={
-                      styles.legendItem
-                    }
-                  >
-                    <i
-                      className={`${styles.legendDot} ${styles.availableLegend}`}
-                    />
-                    Disponível
-                  </span>
-
-                  <span
-                    className={
-                      styles.legendItem
-                    }
-                  >
-                    <i
-                      className={`${styles.legendDot} ${styles.fullLegend}`}
-                    />
-                    Completa
-                  </span>
-
-                  <span
-                    className={
-                      styles.legendItem
-                    }
-                  >
-                    <i
-                      className={`${styles.legendDot} ${styles.emptyLegend}`}
-                    />
-                    Vazia
-                  </span>
-                </div>
-              </header>
-
-              <div
-                className={
-                  styles.mapViewport
-                }
-              >
-                <div
-                  className={
-                    styles.mapCanvas
-                  }
-                >
-                  <div
-                    className={
-                      styles.mapDecor
-                    }
-                    aria-hidden="true"
-                  >
-                    <span
-                      className={
-                        styles.ceremonyLabel
-                      }
-                    >
-                      Mesa dos noivos
-                    </span>
-
-                    <div
-                      className={
-                        styles.danceFloor
-                      }
-                    >
-                      Pista
-                    </div>
-                  </div>
-
-                  {tables.length > 0 ? (
-                    tables.map((table) => {
-                      const tableGuests =
-                        guestsByTable.get(
-                          table.id,
-                        ) ?? [];
-
-                      const occupied =
-                        tableGuests.length;
-
-                      const occupancyStatus =
-                        getOccupancyStatus(
-                          occupied,
-                          table.capacity,
-                        );
-
-                      const statusClass =
-                        occupancyStatus ===
-                        "full"
-                          ? styles.tableFull
-                          : occupancyStatus ===
-                              "empty"
-                            ? styles.tableEmpty
-                            : styles.tableAvailable;
-
-                      return (
-                        <button
-                          key={table.id}
-                          type="button"
-                          className={`${styles.tableNode} ${
-                            selectedTableId ===
-                            table.id
-                              ? styles.selectedTableNode
-                              : ""
-                          }`}
-                          style={{
-                            left: `${table.positionX}%`,
-                            top: `${table.positionY}%`,
-                          }}
-                          aria-label={`Selecionar ${table.name}, ${occupied} de ${table.capacity} lugares ocupados`}
-                          aria-pressed={
-                            selectedTableId ===
-                            table.id
-                          }
-                          onClick={() =>
-                            setSelectedTableId(
-                              table.id,
-                            )
-                          }
-                        >
-                          {Array.from({
-                            length:
-                              table.capacity,
-                          }).map(
-                            (_, index) => (
-                              <span
-                                key={`${table.id}-seat-${index}`}
-                                className={`${styles.seat} ${
-                                  index <
-                                  occupied
-                                    ? styles.occupiedSeat
-                                    : styles.freeSeat
-                                }`}
-                                style={getSeatStyle(
-                                  index,
-                                  table.capacity,
-                                  table.shape,
-                                )}
-                                aria-hidden="true"
-                              />
-                            ),
-                          )}
-
-                          <span
-                            className={`${styles.tableSurface} ${
-                              table.shape ===
-                              "round"
-                                ? styles.roundTable
-                                : styles.rectangleTable
-                            } ${statusClass}`}
-                          >
-                            <strong
-                              className={
-                                styles.tableName
-                              }
-                            >
-                              {table.name}
-                            </strong>
-
-                            <small
-                              className={
-                                styles.tableOccupancy
-                              }
-                            >
-                              {occupied}/
-                              {table.capacity}
-                            </small>
-                          </span>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div
-                      className={
-                        styles.emptyMap
-                      }
-                    >
-                      <span
-                        aria-hidden="true"
-                      >
-                        ○
-                      </span>
-
-                      <strong>
-                        Nenhuma mesa criada
-                      </strong>
-
-                      <p>
-                        Crie a primeira mesa
-                        para iniciar a
-                        organização.
-                      </p>
+                      <progress
+                        max={
+                          table.capacity
+                        }
+                        value={
+                          tableGuests.length
+                        }
+                      />
 
                       <button
                         type="button"
-                        onClick={
-                          openCreateTableModal
-                        }
+                        onClick={(
+                          event,
+                        ) => {
+                          event.stopPropagation();
+                          openEditModal(
+                            table,
+                          );
+                        }}
                       >
-                        Criar mesa
+                        Editar
                       </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div
-              className={styles.listView}
-            >
-              <header
-                className={
-                  styles.mapHeader
-                }
-              >
-                <div>
-                  <span
-                    className={
-                      styles.eyebrow
-                    }
-                  >
-                    Visão administrativa
-                  </span>
-
-                  <h2
-                    className={
-                      styles.mapTitle
-                    }
-                  >
-                    Lista de mesas
-                  </h2>
-                </div>
-
-                <span
-                  className={
-                    styles.panelCount
-                  }
-                >
-                  {tables.length}
-                </span>
-              </header>
-
-              {tables.length > 0 ? (
-                <div
-                  className={
-                    styles.listGrid
-                  }
-                >
-                  {tables.map((table) => {
-                    const tableGuests =
-                      guestsByTable.get(
-                        table.id,
-                      ) ?? [];
-
-                    const occupied =
-                      tableGuests.length;
-
-                    const occupancyStatus =
-                      getOccupancyStatus(
-                        occupied,
-                        table.capacity,
-                      );
-
-                    const occupancyPercentage =
-                      Math.min(
-                        100,
-                        Math.round(
-                          (occupied /
-                            table.capacity) *
-                            100,
-                        ),
-                      );
-
-                    const statusClass =
-                      occupancyStatus ===
-                      "full"
-                        ? styles.statusFull
-                        : occupancyStatus ===
-                            "empty"
-                          ? styles.statusEmpty
-                          : styles.statusAvailable;
-
-                    return (
-                      <article
-                        key={table.id}
-                        className={`${styles.tableListCard} ${
-                          selectedTableId ===
-                          table.id
-                            ? styles.selectedListCard
-                            : ""
-                        }`}
-                      >
-                        <div
-                          className={
-                            styles.tableListTop
-                          }
-                        >
-                          <span
-                            className={`${styles.shapePreview} ${
-                              table.shape ===
-                              "round"
-                                ? styles.shapePreviewRound
-                                : styles.shapePreviewRectangle
-                            }`}
-                            aria-hidden="true"
-                          />
-
-                          <div
-                            className={
-                              styles.tableListIdentity
-                            }
-                          >
-                            <strong>
-                              {table.name}
-                            </strong>
-
-                            <span>
-                              {table.shape ===
-                              "round"
-                                ? "Mesa redonda"
-                                : "Mesa retangular"}
-                            </span>
-                          </div>
-
-                          <span
-                            className={`${styles.tableStatus} ${statusClass}`}
-                          >
-                            {getStatusLabel(
-                              occupancyStatus,
-                            )}
-                          </span>
-                        </div>
-
-                        <div
-                          className={
-                            styles.occupancyBlock
-                          }
-                        >
-                          <div
-                            className={
-                              styles.occupancyHeader
-                            }
-                          >
-                            <span>
-                              Ocupação
-                            </span>
-
-                            <strong>
-                              {occupied}/
-                              {
-                                table.capacity
-                              }
-                            </strong>
-                          </div>
-
-                          <div
-                            className={
-                              styles.progressTrack
-                            }
-                          >
-                            <span
-                              className={
-                                styles.progressFill
-                              }
-                              style={{
-                                width: `${occupancyPercentage}%`,
-                              }}
-                            />
-                          </div>
-
-                          <small>
-                            {Math.max(
-                              0,
-                              table.capacity -
-                                occupied,
-                            )}{" "}
-                            lugares disponíveis
-                          </small>
-                        </div>
-
-                        <div
-                          className={
-                            styles.guestPreview
-                          }
-                        >
-                          {tableGuests.length >
-                          0 ? (
-                            <>
-                              {tableGuests
-                                .slice(0, 4)
-                                .map(
-                                  (guest) => (
-                                    <span
-                                      key={
-                                        guest.id
-                                      }
-                                      className={
-                                        styles.guestChip
-                                      }
-                                    >
-                                      {
-                                        guest.name
-                                      }
-                                    </span>
-                                  ),
-                                )}
-
-                              {tableGuests.length >
-                                4 && (
-                                <span
-                                  className={
-                                    styles.moreGuests
-                                  }
-                                >
-                                  +
-                                  {tableGuests.length -
-                                    4}{" "}
-                                  convidados
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span
-                              className={
-                                styles.moreGuests
-                              }
-                            >
-                              Nenhum convidado
-                              alocado
-                            </span>
-                          )}
-                        </div>
-
-                        <div
-                          className={
-                            styles.tableListActions
-                          }
-                        >
-                          <button
-                            type="button"
-                            className={
-                              styles.secondaryButton
-                            }
-                            onClick={() =>
-                              setSelectedTableId(
-                                table.id,
-                              )
-                            }
-                          >
-                            Selecionar
-                          </button>
-
-                          <button
-                            type="button"
-                            className={
-                              styles.secondaryButton
-                            }
-                            onClick={() =>
-                              openEditTableModal(
-                                table,
-                              )
-                            }
-                          >
-                            Editar
-                          </button>
-
-                          <button
-                            type="button"
-                            className={
-                              styles.dangerGhostButton
-                            }
-                            onClick={() =>
-                              deleteTable(
-                                table.id,
-                              )
-                            }
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div
-                  className={styles.emptyMap}
-                >
-                  <strong>
-                    Nenhuma mesa criada
-                  </strong>
-
-                  <button
-                    type="button"
-                    onClick={
-                      openCreateTableModal
-                    }
-                  >
-                    Criar mesa
-                  </button>
-                </div>
+                    </article>
+                  );
+                },
               )}
             </div>
           )}
-        </main>
+        </div>
 
         <aside
-          className={styles.detailsPanel}
+          className={
+            styles.detailsPanel
+          }
         >
           {selectedTable ? (
             <>
               <header
                 className={
-                  styles.detailHeader
+                  styles.detailsHeader
                 }
               >
-                <span
-                  className={`${styles.detailShape} ${
-                    selectedTable.shape ===
-                    "round"
-                      ? styles.detailShapeRound
-                      : styles.detailShapeRectangle
-                  }`}
-                  aria-hidden="true"
-                />
-
-                <div
-                  className={
-                    styles.detailTitle
-                  }
-                >
+                <div>
                   <span
                     className={
                       styles.eyebrow
@@ -1593,498 +1590,402 @@ export default function TableManager({
                   <h2>
                     {selectedTable.name}
                   </h2>
+
+                  <p>
+                    {
+                      shapeLabels[
+                        selectedTable.shape
+                      ]
+                    }
+                    {" · "}
+                    {
+                      assignedGuests.length
+                    }
+                    /
+                    {
+                      selectedTable.capacity
+                    }
+                    {" lugares"}
+                  </p>
                 </div>
 
-                <button
-                  type="button"
+                <div
                   className={
-                    styles.iconButton
-                  }
-                  aria-label={`Editar ${selectedTable.name}`}
-                  onClick={() =>
-                    openEditTableModal(
-                      selectedTable,
-                    )
+                    styles.tableActions
                   }
                 >
-                  ✎
-                </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openEditModal(
+                        selectedTable,
+                      )
+                    }
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      styles.deleteButton
+                    }
+                    disabled={
+                      activeTableId ===
+                      selectedTable.id
+                    }
+                    onClick={() =>
+                      deleteTable(
+                        selectedTable,
+                      )
+                    }
+                  >
+                    Excluir
+                  </button>
+                </div>
               </header>
 
               <div
-                className={styles.detailMeta}
-              >
-                <span>
-                  {selectedTable.shape ===
-                  "round"
-                    ? "Mesa redonda"
-                    : "Mesa retangular"}
-                </span>
-
-                <span>
-                  {
-                    selectedTableGuests.length
-                  }
-                  /
-                  {
-                    selectedTable.capacity
-                  }{" "}
-                  lugares
-                </span>
-              </div>
-
-              <div
                 className={
-                  styles.detailProgress
+                  styles.capacityBar
                 }
               >
-                <div
-                  className={
-                    styles.detailProgressHeader
-                  }
-                >
-                  <span>
-                    Ocupação da mesa
-                  </span>
-
-                  <strong>
-                    {selectedTable.capacity >
-                    0
-                      ? Math.round(
-                          (selectedTableGuests.length /
-                            selectedTable.capacity) *
-                            100,
-                        )
-                      : 0}
-                    %
-                  </strong>
-                </div>
-
-                <div
-                  className={
-                    styles.progressTrack
-                  }
-                >
-                  <span
-                    className={
-                      styles.progressFill
-                    }
-                    style={{
-                      width: `${
-                        selectedTable.capacity >
-                        0
-                          ? Math.min(
-                              100,
-                              Math.round(
-                                (selectedTableGuests.length /
-                                  selectedTable.capacity) *
-                                  100,
-                              ),
-                            )
-                          : 0
-                      }%`,
-                    }}
-                  />
-                </div>
+                <span
+                  style={{
+                    width:
+                      `${Math.min(
+                        100,
+                        (
+                          assignedGuests.length /
+                          selectedTable.capacity
+                        ) * 100,
+                      )}%`,
+                  }}
+                />
               </div>
 
-              <div
+              <section
                 className={
-                  styles.detailGuestList
+                  styles.assignSection
+                }
+              >
+                <label>
+                  <span>
+                    Adicionar convidado
+                  </span>
+
+                  <div>
+                    <select
+                      value={
+                        selectedGuestId
+                      }
+                      onChange={(event) =>
+                        setSelectedGuestId(
+                          event.target
+                            .value,
+                        )
+                      }
+                    >
+                      <option value="">
+                        Selecione uma pessoa
+                      </option>
+
+                      {unassignedGuests.map(
+                        (guest) => (
+                          <option
+                            key={
+                              guest.id
+                            }
+                            value={
+                              guest.id
+                            }
+                          >
+                            {
+                              guest.name
+                            }
+                            {" — "}
+                            {
+                              guest.groupName
+                            }
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    <button
+                      type="button"
+                      disabled={
+                        !selectedGuestId ||
+                        Boolean(
+                          activeGuestId,
+                        ) ||
+                        assignedGuests.length >=
+                          selectedTable.capacity
+                      }
+                      onClick={() =>
+                        assignGuest()
+                      }
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                </label>
+              </section>
+
+              <section
+                className={
+                  styles.assignedSection
                 }
               >
                 <header>
-                  <strong>
-                    Pessoas alocadas
-                  </strong>
-
-                  <span>
-                    {
-                      selectedTableGuests.length
+                  <span
+                    className={
+                      styles.eyebrow
                     }
+                  >
+                    Lugares ocupados
                   </span>
+
+                  <strong>
+                    {
+                      assignedGuests.length
+                    }
+                    {" convidados"}
+                  </strong>
                 </header>
 
-                {selectedTableGuests.length >
+                {assignedGuests.length >
                 0 ? (
-                  selectedTableGuests.map(
-                    (guest) => (
-                      <article
-                        key={guest.id}
-                        className={
-                          styles.detailGuest
-                        }
-                      >
-                        <span
-                          className={
-                            styles.detailGuestAvatar
-                          }
-                          aria-hidden="true"
-                        >
-                          {getInitials(
-                            guest.name,
-                          )}
-                        </span>
-
+                  <div
+                    className={
+                      styles.assignedList
+                    }
+                  >
+                    {assignedGuests.map(
+                      (guest) => (
                         <div
+                          key={
+                            guest.id
+                          }
                           className={
-                            styles.detailGuestIdentity
+                            styles.guestRow
                           }
                         >
-                          <strong>
-                            {guest.name}
-                          </strong>
+                          <span
+                            className={
+                              styles.avatar
+                            }
+                            aria-hidden="true"
+                          >
+                            {getInitials(
+                              guest.name,
+                            )}
+                          </span>
 
-                          <span>
+                          <div>
+                            <strong>
+                              {guest.name}
+                            </strong>
+
+                            <span>
+                              {
+                                guest.groupName
+                              }
+                              {" · "}
+                              {
+                                sideLabels[
+                                  guest.side
+                                ]
+                              }
+                            </span>
+                          </div>
+
+                          <span
+                            className={`${styles.confirmationBadge} ${
+                              styles[
+                                `confirmation-${guest.confirmation}`
+                              ]
+                            }`}
+                          >
                             {
-                              getRelationshipLabel(
-                                guest,
-                              )
+                              confirmationLabels[
+                                guest.confirmation
+                              ]
                             }
                           </span>
-                        </div>
 
-                        <button
-                          type="button"
-                          className={
-                            styles.removeGuestButton
-                          }
-                          aria-label={`Remover ${guest.name} da mesa`}
-                          onClick={() =>
-                            removeGuestFromTable(
-                              guest.id,
-                            )
-                          }
-                        >
-                          ×
-                        </button>
-                      </article>
-                    ),
-                  )
+                          <button
+                            type="button"
+                            aria-label={`Remover ${guest.name} da mesa`}
+                            disabled={
+                              activeGuestId ===
+                              guest.id
+                            }
+                            onClick={() =>
+                              unassignGuest(
+                                guest.id,
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ),
+                    )}
+                  </div>
                 ) : (
                   <div
                     className={
-                      styles.detailEmpty
+                      styles.emptyAssigned
                     }
                   >
-                    <span
-                      aria-hidden="true"
-                    >
-                      ○
-                    </span>
-
-                    <p>
-                      Esta mesa ainda não possui
-                      convidados.
-                    </p>
+                    Nenhum convidado
+                    nesta mesa.
                   </div>
                 )}
-              </div>
+              </section>
 
-              <footer
-                className={
-                  styles.detailFooter
-                }
-              >
-                <p>
-                  Selecione uma pessoa na coluna
-                  “Sem mesa” para adicioná-la.
-                </p>
-
-                <button
-                  type="button"
+              {selectedTable.notes && (
+                <div
                   className={
-                    styles.deleteButton
-                  }
-                  onClick={() =>
-                    deleteTable(
-                      selectedTable.id,
-                    )
+                    styles.notes
                   }
                 >
-                  Excluir mesa
-                </button>
-              </footer>
+                  <strong>
+                    Observações
+                  </strong>
+
+                  <p>
+                    {
+                      selectedTable.notes
+                    }
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <div
               className={
-                styles.emptyDetails
+                styles.noSelection
               }
             >
-              <span
-                className={
-                  styles.emptyDetailsIcon
-                }
-                aria-hidden="true"
-              >
-                ○
-              </span>
-
               <strong>
                 Selecione uma mesa
               </strong>
 
               <p>
-                Clique em uma mesa no mapa
-                para visualizar e organizar
-                seus convidados.
+                Os convidados e as
+                ações da mesa aparecerão
+                aqui.
               </p>
             </div>
           )}
-        </aside>
-      </section>
 
-      {isModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          role="presentation"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              closeTableModal();
+          <section
+            className={
+              styles.unassignedSection
             }
-          }}
-        >
-          <div
-            className={styles.modal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="table-modal-title"
           >
-            <header
-              className={styles.modalHeader}
-            >
+            <header>
               <div>
                 <span
                   className={
                     styles.eyebrow
                   }
                 >
-                  Organização do salão
+                  Sem mesa
                 </span>
 
-                <h2 id="table-modal-title">
-                  {tableForm.id
-                    ? "Editar mesa"
-                    : "Criar nova mesa"}
-                </h2>
+                <strong>
+                  {
+                    unassignedGuests.length
+                  }
+                  {" pessoas"}
+                </strong>
               </div>
 
-              <button
-                type="button"
-                className={
-                  styles.closeButton
+              <input
+                type="search"
+                value={search}
+                placeholder="Buscar..."
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value,
+                  )
                 }
-                aria-label="Fechar"
-                onClick={
-                  closeTableModal
-                }
-              >
-                ×
-              </button>
+              />
             </header>
 
-            <form
-              className={styles.form}
-              onSubmit={saveTable}
+            <div
+              className={
+                styles.unassignedList
+              }
             >
-              <label
-                className={
-                  styles.fieldGroup
-                }
-              >
-                <span>
-                  Nome da mesa
-                </span>
-
-                <input
-                  type="text"
-                  value={tableForm.name}
-                  placeholder="Ex.: Mesa 01"
-                  autoFocus
-                  onChange={(event) =>
-                    setTableForm(
-                      (currentForm) => ({
-                        ...currentForm,
-                        name: event.target
-                          .value,
-                      }),
-                    )
-                  }
-                />
-              </label>
-
-              <fieldset
-                className={
-                  styles.fieldGroup
-                }
-              >
-                <legend>
-                  Formato
-                </legend>
-
-                <div
-                  className={
-                    styles.shapeSelector
-                  }
-                >
-                  <button
-                    type="button"
-                    className={`${styles.shapeOption} ${
-                      tableForm.shape ===
-                      "round"
-                        ? styles.selectedShape
-                        : ""
-                    }`}
-                    aria-pressed={
-                      tableForm.shape ===
-                      "round"
-                    }
-                    onClick={() =>
-                      setTableForm(
-                        (currentForm) => ({
-                          ...currentForm,
-                          shape: "round",
-                        }),
-                      )
-                    }
-                  >
-                    <i
-                      className={
-                        styles.shapePreviewRound
+              {unassignedGuests
+                .slice(0, 20)
+                .map(
+                  (guest) => (
+                    <button
+                      key={
+                        guest.id
                       }
-                      aria-hidden="true"
-                    />
-
-                    <span>
-                      Redonda
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`${styles.shapeOption} ${
-                      tableForm.shape ===
-                      "rectangle"
-                        ? styles.selectedShape
-                        : ""
-                    }`}
-                    aria-pressed={
-                      tableForm.shape ===
-                      "rectangle"
-                    }
-                    onClick={() =>
-                      setTableForm(
-                        (currentForm) => ({
-                          ...currentForm,
-                          shape:
-                            "rectangle",
-                        }),
-                      )
-                    }
-                  >
-                    <i
-                      className={
-                        styles.shapePreviewRectangle
+                      type="button"
+                      disabled={
+                        !selectedTable ||
+                        assignedGuests.length >=
+                          selectedTable.capacity ||
+                        Boolean(
+                          activeGuestId,
+                        )
                       }
-                      aria-hidden="true"
-                    />
+                      onClick={() =>
+                        assignGuest(
+                          guest.id,
+                        )
+                      }
+                    >
+                      <span
+                        className={
+                          styles.avatar
+                        }
+                        aria-hidden="true"
+                      >
+                        {getInitials(
+                          guest.name,
+                        )}
+                      </span>
 
-                    <span>
-                      Retangular
-                    </span>
-                  </button>
-                </div>
-              </fieldset>
+                      <span>
+                        <strong>
+                          {guest.name}
+                        </strong>
 
-              <label
-                className={
-                  styles.fieldGroup
-                }
-              >
-                <span>
-                  Capacidade
-                </span>
+                        <small>
+                          {
+                            guest.groupName
+                          }
+                        </small>
+                      </span>
 
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={
-                    tableForm.capacity
-                  }
-                  onChange={(event) =>
-                    setTableForm(
-                      (currentForm) => ({
-                        ...currentForm,
-                        capacity: Number(
-                          event.target
-                            .value,
-                        ),
-                      }),
-                    )
-                  }
-                />
+                      <i
+                        aria-hidden="true"
+                      >
+                        +
+                      </i>
+                    </button>
+                  ),
+                )}
+            </div>
+          </section>
+        </aside>
+      </section>
 
-                <small>
-                  Quantidade máxima de
-                  convidados cadastrados na
-                  mesa.
-                </small>
-              </label>
-
-              {formError && (
-                <div
-                  className={
-                    styles.modalError
-                  }
-                  role="alert"
-                >
-                  <span
-                    aria-hidden="true"
-                  >
-                    !
-                  </span>
-
-                  {formError}
-                </div>
-              )}
-
-              <div
-                className={
-                  styles.modalActions
-                }
-              >
-                <button
-                  type="button"
-                  className={
-                    styles.cancelButton
-                  }
-                  onClick={
-                    closeTableModal
-                  }
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className={
-                    styles.saveButton
-                  }
-                >
-                  {tableForm.id
-                    ? "Salvar alterações"
-                    : "Criar mesa"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {mounted &&
+        modal &&
+        createPortal(
+          modal,
+          document.body,
+        )}
     </div>
   );
 }

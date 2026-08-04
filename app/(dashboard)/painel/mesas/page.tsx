@@ -1,219 +1,106 @@
 import TableManager, {
-  type TableGuest,
-  type WeddingTable,
+  type SeatingGuest,
+  type SeatingTable,
 } from "@/components/dashboard/mesas/table-manager";
 
-const tables: WeddingTable[] = [
-  {
-    id: "table-01",
-    name: "Mesa 01",
-    shape: "round",
-    capacity: 8,
-    positionX: 22,
-    positionY: 31,
-  },
-  {
-    id: "table-02",
-    name: "Mesa 02",
-    shape: "rectangle",
-    capacity: 10,
-    positionX: 51,
-    positionY: 29,
-  },
-  {
-    id: "table-03",
-    name: "Mesa 03",
-    shape: "round",
-    capacity: 8,
-    positionX: 79,
-    positionY: 35,
-  },
-  {
-    id: "table-04",
-    name: "Mesa 04",
-    shape: "round",
-    capacity: 6,
-    positionX: 33,
-    positionY: 70,
-  },
-  {
-    id: "table-05",
-    name: "Mesa 05",
-    shape: "rectangle",
-    capacity: 10,
-    positionX: 69,
-    positionY: 70,
-  },
-];
+import { requireCurrentWedding } from "@/lib/auth/get-current-wedding";
+import { getTableManagementData } from "@/lib/data/tables";
 
-const guests: TableGuest[] = [
-  {
-    id: "guest-01",
-    name: "Mariana Souza",
-    invitationName: "Família Souza",
-    relationship: "Titular do convite",
-    status: "confirmed",
-    tableId: "table-01",
-  },
-  {
-    id: "guest-02",
-    name: "João Souza",
-    invitationName: "Família Souza",
-    relationship: "Marido de Mariana",
-    status: "confirmed",
-    tableId: "table-01",
-  },
-  {
-    id: "guest-03",
-    name: "Ana Souza",
-    invitationName: "Família Souza",
-    relationship: "Filha de Mariana",
-    status: "pending",
-    tableId: null,
-  },
-  {
-    id: "guest-04",
-    name: "João Pedro Almeida",
-    invitationName: "João Pedro e Camila",
-    relationship: "Titular do convite",
-    status: "pending",
-    tableId: null,
-  },
-  {
-    id: "guest-05",
-    name: "Camila Ferreira",
-    invitationName: "João Pedro e Camila",
-    relationship: "Namorada de João Pedro",
-    status: "pending",
-    tableId: null,
-  },
-  {
-    id: "guest-06",
-    name: "Carla Mendes",
-    invitationName: "Carla Mendes",
-    relationship: "Convidada individual",
-    status: "confirmed",
-    tableId: "table-02",
-  },
-  {
-    id: "guest-07",
-    name: "Rafael Oliveira",
-    invitationName: "Família Oliveira",
-    relationship: "Titular do convite",
-    status: "declined",
-    tableId: null,
-  },
-  {
-    id: "guest-08",
-    name: "Fernanda Oliveira",
-    invitationName: "Família Oliveira",
-    relationship: "Esposa de Rafael",
-    status: "declined",
-    tableId: null,
-  },
-  {
-    id: "guest-09",
-    name: "Lúcia Tavares",
-    invitationName: "Família Tavares",
-    relationship: "Titular do convite",
-    status: "confirmed",
-    tableId: "table-01",
-  },
-  {
-    id: "guest-10",
-    name: "Carlos Tavares",
-    invitationName: "Família Tavares",
-    relationship: "Marido de Lúcia",
-    status: "confirmed",
-    tableId: "table-01",
-  },
-  {
-    id: "guest-11",
-    name: "Patrícia Lima",
-    invitationName: "Família Lima",
-    relationship: "Titular do convite",
-    status: "confirmed",
-    tableId: "table-03",
-  },
-  {
-    id: "guest-12",
-    name: "Lucas Ferreira",
-    invitationName: "Amigos do noivo",
-    relationship: "Convidado individual",
-    status: "confirmed",
-    tableId: null,
-  },
-  {
-    id: "guest-13",
-    name: "Fernando Costa",
-    invitationName: "Amigos da faculdade",
-    relationship: "Convidado individual",
-    status: "confirmed",
-    tableId: null,
-  },
-  {
-    id: "guest-14",
-    name: "Beatriz Martins",
-    invitationName: "Família Martins",
-    relationship: "Titular do convite",
-    status: "confirmed",
-    tableId: "table-02",
-  },
-  {
-    id: "guest-15",
-    name: "Renata Martins",
-    invitationName: "Família Martins",
-    relationship: "Irmã de Beatriz",
-    status: "confirmed",
-    tableId: "table-02",
-  },
-  {
-    id: "guest-16",
-    name: "Gustavo Rocha",
-    invitationName: "Amigos do casal",
-    relationship: "Convidado individual",
-    status: "confirmed",
-    tableId: "table-03",
-  },
-  {
-    id: "guest-17",
-    name: "Paula Nascimento",
-    invitationName: "Trabalho",
-    relationship: "Convidada individual",
-    status: "confirmed",
-    tableId: null,
-  },
-  {
-    id: "guest-18",
-    name: "André Santos",
-    invitationName: "Família Santos",
-    relationship: "Titular do convite",
-    status: "confirmed",
-    tableId: "table-04",
-  },
-  {
-    id: "guest-19",
-    name: "Elisa Santos",
-    invitationName: "Família Santos",
-    relationship: "Esposa de André",
-    status: "confirmed",
-    tableId: "table-04",
-  },
-  {
-    id: "guest-20",
-    name: "Marcelo Moreira",
-    invitationName: "Amigos da noiva",
-    relationship: "Convidado individual",
-    status: "confirmed",
-    tableId: null,
-  },
-];
+export default async function TablesPage() {
+  const wedding =
+    await requireCurrentWedding();
 
-export default function TablesPage() {
+  const {
+    tables,
+    assignments,
+    guests,
+    groups,
+  } = await getTableManagementData(
+    wedding.id,
+  );
+
+  const groupsById =
+    new Map(
+      groups.map((group) => [
+        group.id,
+        group.name,
+      ]),
+    );
+
+  const tableIdByGuestId =
+    new Map(
+      assignments.map(
+        (assignment) => [
+          assignment.guest_id,
+          assignment.table_id,
+        ],
+      ),
+    );
+
+  const seatingGuests:
+    SeatingGuest[] =
+    guests.map((guest) => ({
+      id: guest.id,
+      name: guest.full_name,
+
+      preferredName:
+        guest.preferred_name ??
+        undefined,
+
+      groupName:
+        groupsById.get(
+          guest.invitation_group_id,
+        ) ?? "Sem grupo",
+
+      side: guest.side,
+
+      confirmation:
+        guest.confirmation_status,
+
+      isPrimary:
+        guest.is_primary,
+
+      isChild:
+        guest.is_child,
+
+      tableId:
+        tableIdByGuestId.get(
+          guest.id,
+        ),
+    }));
+
+  const seatingTables:
+    SeatingTable[] =
+    tables.map((table) => ({
+      id: table.id,
+      name: table.name,
+
+      shape:
+        table.shape as
+          SeatingTable["shape"],
+
+      capacity: table.capacity,
+
+      positionX:
+        table.position_x,
+
+      positionY:
+        table.position_y,
+
+      rotation:
+        table.rotation,
+
+      notes:
+        table.notes ??
+        undefined,
+    }));
+
   return (
     <TableManager
-      initialGuests={guests}
-      initialTables={tables}
+      initialTables={seatingTables}
+      initialGuests={seatingGuests}
+      brideName={wedding.brideName}
+      groomName={wedding.groomName}
     />
   );
 }

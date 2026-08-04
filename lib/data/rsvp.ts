@@ -1,54 +1,35 @@
+import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
+
+type InvitationGroupRow =
+  Database["public"]["Tables"]["invitation_groups"]["Row"];
+
+type GuestRow =
+  Database["public"]["Tables"]["guests"]["Row"];
+
+export type RsvpManagementData = {
+  groups: InvitationGroupRow[];
+  guests: GuestRow[];
+};
 
 export async function getRsvpManagementData(
   weddingId: string,
-) {
+): Promise<RsvpManagementData> {
   const supabase = await createClient();
 
-  const [
-    groupsResult,
-    guestsResult,
-  ] = await Promise.all([
-    supabase
-      .from("invitation_groups")
-      .select(
-        [
-          "id",
-          "name",
-          "invitation_code",
-        ].join(","),
-      )
-      .eq("wedding_id", weddingId)
-      .order("name", {
-        ascending: true,
-      }),
+  /*
+   * As consultas ficam separadas e usam select() tipado.
+   * Isso evita o GenericStringError causado pelo select
+   * construído dinamicamente com array.join(",").
+   */
 
-    supabase
-      .from("guests")
-      .select(
-        [
-          "id",
-          "invitation_group_id",
-          "full_name",
-          "preferred_name",
-          "email",
-          "phone",
-          "side",
-          "confirmation_status",
-          "is_primary",
-          "is_child",
-          "relationship_label",
-          "responded_at",
-        ].join(","),
-      )
-      .eq("wedding_id", weddingId)
-      .order("is_primary", {
-        ascending: false,
-      })
-      .order("full_name", {
-        ascending: true,
-      }),
-  ]);
+  const groupsResult = await supabase
+    .from("invitation_groups")
+    .select()
+    .eq("wedding_id", weddingId)
+    .order("name", {
+      ascending: true,
+    });
 
   if (groupsResult.error) {
     console.error(
@@ -60,6 +41,17 @@ export async function getRsvpManagementData(
       "Não foi possível carregar os grupos de convite.",
     );
   }
+
+  const guestsResult = await supabase
+    .from("guests")
+    .select()
+    .eq("wedding_id", weddingId)
+    .order("is_primary", {
+      ascending: false,
+    })
+    .order("full_name", {
+      ascending: true,
+    });
 
   if (guestsResult.error) {
     console.error(
