@@ -53,6 +53,156 @@ export type Database = {
         }
         Relationships: []
       }
+      guests: {
+        Row: {
+          confirmation_status: Database["public"]["Enums"]["guest_confirmation_status"]
+          created_at: string
+          dietary_restrictions: string | null
+          email: string | null
+          full_name: string
+          id: string
+          invitation_group_id: string
+          is_child: boolean
+          is_primary: boolean
+          linked_guest_id: string | null
+          notes: string | null
+          phone: string | null
+          preferred_name: string | null
+          relationship_label: string | null
+          responded_at: string | null
+          side: Database["public"]["Enums"]["guest_side"]
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          confirmation_status?: Database["public"]["Enums"]["guest_confirmation_status"]
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          invitation_group_id: string
+          is_child?: boolean
+          is_primary?: boolean
+          linked_guest_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_name?: string | null
+          relationship_label?: string | null
+          responded_at?: string | null
+          side?: Database["public"]["Enums"]["guest_side"]
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          confirmation_status?: Database["public"]["Enums"]["guest_confirmation_status"]
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          invitation_group_id?: string
+          is_child?: boolean
+          is_primary?: boolean
+          linked_guest_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_name?: string | null
+          relationship_label?: string | null
+          responded_at?: string | null
+          side?: Database["public"]["Enums"]["guest_side"]
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_group_wedding_fk"
+            columns: ["invitation_group_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "invitation_groups"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "guests_linked_guest_wedding_fk"
+            columns: ["linked_guest_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "guests_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_groups: {
+        Row: {
+          city: string | null
+          complement: string | null
+          created_at: string
+          id: string
+          invitation_code: string
+          name: string
+          neighborhood: string | null
+          notes: string | null
+          postal_code: string | null
+          recipient_name: string | null
+          save_the_date_status: Database["public"]["Enums"]["save_the_date_status"]
+          state: string | null
+          street: string | null
+          street_number: string | null
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          id?: string
+          invitation_code: string
+          name: string
+          neighborhood?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          recipient_name?: string | null
+          save_the_date_status?: Database["public"]["Enums"]["save_the_date_status"]
+          state?: string | null
+          street?: string | null
+          street_number?: string | null
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          id?: string
+          invitation_code?: string
+          name?: string
+          neighborhood?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          recipient_name?: string | null
+          save_the_date_status?: Database["public"]["Enums"]["save_the_date_status"]
+          state?: string | null
+          street?: string | null
+          street_number?: string | null
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_groups_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_members: {
         Row: {
           created_at: string
@@ -182,9 +332,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_guest_with_primary_transfer: {
+        Args: { p_guest_id: string; p_new_primary_guest_id?: string }
+        Returns: string
+      }
     }
     Enums: {
+      guest_confirmation_status: "pending" | "confirmed" | "declined"
+      guest_side: "bride" | "groom" | "both"
+      save_the_date_status: "not_ready" | "ready" | "sent" | "delivered"
       wedding_member_role: "owner" | "admin" | "viewer"
       wedding_member_type: "bride" | "groom" | "planner" | "developer" | "other"
       wedding_status: "active" | "archived"
@@ -315,6 +471,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      guest_confirmation_status: ["pending", "confirmed", "declined"],
+      guest_side: ["bride", "groom", "both"],
+      save_the_date_status: ["not_ready", "ready", "sent", "delivered"],
       wedding_member_role: ["owner", "admin", "viewer"],
       wedding_member_type: ["bride", "groom", "planner", "developer", "other"],
       wedding_status: ["active", "archived"],

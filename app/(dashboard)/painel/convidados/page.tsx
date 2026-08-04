@@ -1,249 +1,187 @@
 import GuestList, {
+  type GuestAddress,
   type GuestItem,
+  type GuestRelationship,
   type InvitationGroup,
 } from "@/components/dashboard/convidados/guest-list";
 
-const invitationGroups: InvitationGroup[] = [
-  {
-    id: 1,
-    name: "Mariana e Lucas",
-    invitationCode: "MARI-4281",
-    primaryGuestId: 1,
-    saveTheDateStatus: "ready",
-    address: {
-      recipientName: "Mariana Souza e Lucas Martins",
-      postalCode: "66055-260",
-      street: "Avenida Governador José Malcher",
-      number: "1200",
-      complement: "Apartamento 804",
-      neighborhood: "Nazaré",
-      city: "Belém",
-      state: "PA",
-    },
-  },
-  {
-    id: 2,
-    name: "João Pedro Almeida",
-    invitationCode: "JOAO-6812",
-    primaryGuestId: 3,
-    saveTheDateStatus: "not_ready",
-  },
-  {
-    id: 3,
-    name: "Carla e Eduardo",
-    invitationCode: "CARL-3189",
-    primaryGuestId: 4,
-    saveTheDateStatus: "sent",
-    address: {
-      recipientName: "Carla Mendes e Eduardo Lima",
-      postalCode: "66050-380",
-      street: "Travessa Quintino Bocaiúva",
-      number: "845",
-      complement: "Casa 02",
-      neighborhood: "Reduto",
-      city: "Belém",
-      state: "PA",
-    },
-  },
-  {
-    id: 4,
-    name: "Rafael Oliveira",
-    invitationCode: "RAFA-9044",
-    primaryGuestId: 6,
-    saveTheDateStatus: "not_ready",
-  },
-  {
-    id: 5,
-    name: "Família Tavares",
-    invitationCode: "TAVA-1212",
-    primaryGuestId: 7,
-    saveTheDateStatus: "delivered",
-    address: {
-      recipientName: "Lúcia Tavares e família",
-      postalCode: "66075-110",
-      street: "Rua dos Mundurucus",
-      number: "2301",
-      neighborhood: "Guamá",
-      city: "Belém",
-      state: "PA",
-    },
-  },
-  {
-    id: 6,
-    name: "Fernando Costa",
-    invitationCode: "FERN-7788",
-    primaryGuestId: 10,
-    saveTheDateStatus: "ready",
-    address: {
-      recipientName: "Fernando Costa",
-      postalCode: "66035-170",
-      street: "Avenida Nazaré",
-      number: "516",
-      neighborhood: "Nazaré",
-      city: "Belém",
-      state: "PA",
-    },
-  },
-  {
-    id: 7,
-    name: "Patrícia Lima",
-    invitationCode: "PATR-9087",
-    primaryGuestId: 11,
-    saveTheDateStatus: "sent",
-    address: {
-      recipientName: "Patrícia Lima",
-      postalCode: "66040-143",
-      street: "Travessa 14 de Março",
-      number: "955",
-      complement: "Apartamento 301",
-      neighborhood: "Umarizal",
-      city: "Belém",
-      state: "PA",
-    },
-  },
-];
+import { requireCurrentWedding } from "@/lib/auth/get-current-wedding";
+import { getGuestManagementData } from "@/lib/data/guests";
 
-const guests: GuestItem[] = [
-  {
-    id: 1,
-    name: "Mariana Souza",
-    phone: "(91) 99123-4567",
-    email: "mariana@email.com",
-    group: "Família",
-    side: "bride",
-    confirmation: "confirmed",
-    table: "Mesa 03",
-    invitationGroupId: 1,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 2,
-    name: "Lucas Martins",
-    phone: "(91) 99918-2204",
-    group: "Família",
-    side: "bride",
-    confirmation: "pending",
-    table: "Mesa 03",
-    invitationGroupId: 1,
-    isPrimaryGuest: false,
-    relationship: "boyfriend",
-    linkedGuestId: 1,
-  },
-  {
-    id: 3,
-    name: "João Pedro Almeida",
-    phone: "(91) 98111-2233",
-    group: "Amigos",
-    side: "groom",
-    confirmation: "pending",
-    invitationGroupId: 2,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 4,
-    name: "Carla Mendes",
-    phone: "(91) 99234-7766",
-    group: "Trabalho",
-    side: "bride",
-    confirmation: "confirmed",
-    table: "Mesa 07",
-    invitationGroupId: 3,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 5,
-    name: "Eduardo Lima",
-    phone: "(91) 98551-0310",
-    group: "Trabalho",
-    side: "bride",
-    confirmation: "confirmed",
-    table: "Mesa 07",
-    invitationGroupId: 3,
-    isPrimaryGuest: false,
-    relationship: "spouse",
-    linkedGuestId: 4,
-  },
-  {
-    id: 6,
-    name: "Rafael Oliveira",
-    phone: "(91) 98876-4455",
-    email: "rafael@email.com",
-    group: "Amigos",
-    side: "both",
-    confirmation: "declined",
-    invitationGroupId: 4,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 7,
-    name: "Lúcia Tavares",
-    phone: "(91) 99987-1212",
-    group: "Família",
-    side: "groom",
-    confirmation: "confirmed",
-    table: "Mesa 01",
-    invitationGroupId: 5,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 8,
-    name: "Paulo Tavares",
-    group: "Família",
-    side: "groom",
-    confirmation: "confirmed",
-    table: "Mesa 01",
-    invitationGroupId: 5,
-    isPrimaryGuest: false,
-    relationship: "spouse",
-    linkedGuestId: 7,
-  },
-  {
-    id: 9,
-    name: "Clara Tavares",
-    group: "Família",
-    side: "groom",
-    confirmation: "pending",
-    table: "Mesa 01",
-    invitationGroupId: 5,
-    isPrimaryGuest: false,
-    relationship: "child",
-    linkedGuestId: 7,
-  },
-  {
-    id: 10,
-    name: "Fernando Costa",
-    phone: "(91) 98444-7788",
-    group: "Faculdade",
-    side: "both",
-    confirmation: "pending",
-    invitationGroupId: 6,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-  {
-    id: 11,
-    name: "Patrícia Lima",
-    phone: "(91) 99321-9087",
-    group: "Família",
-    side: "bride",
-    confirmation: "confirmed",
-    table: "Mesa 02",
-    invitationGroupId: 7,
-    isPrimaryGuest: true,
-    relationship: "primary",
-  },
-];
+function buildGroupAddress(
+  group: Awaited<
+    ReturnType<typeof getGuestManagementData>
+  >["groups"][number],
+): GuestAddress | undefined {
+  const hasAddress = [
+    group.recipient_name,
+    group.postal_code,
+    group.street,
+    group.street_number,
+    group.complement,
+    group.neighborhood,
+    group.city,
+    group.state,
+  ].some((value) => Boolean(value?.trim()));
 
-export default function GuestsPage() {
+  if (!hasAddress) {
+    return undefined;
+  }
+
+  return {
+    recipientName:
+      group.recipient_name?.trim() ||
+      group.name,
+
+    postalCode:
+      group.postal_code?.trim() ?? "",
+
+    street:
+      group.street?.trim() ?? "",
+
+    number:
+      group.street_number?.trim() ?? "",
+
+    complement:
+      group.complement?.trim() ||
+      undefined,
+
+    neighborhood:
+      group.neighborhood?.trim() ?? "",
+
+    city:
+      group.city?.trim() ?? "",
+
+    state:
+      group.state?.trim() ?? "",
+  };
+}
+
+function getGuestRelationship(
+  isPrimary: boolean,
+  isChild: boolean,
+): GuestRelationship {
+  if (isPrimary) {
+    return "primary";
+  }
+
+  if (isChild) {
+    return "child";
+  }
+
+  return "other";
+}
+
+export default async function GuestsPage() {
+  const wedding =
+    await requireCurrentWedding();
+
+  const { groups, guests } =
+    await getGuestManagementData(
+      wedding.id,
+    );
+
+  const groupsById = new Map(
+    groups.map((group) => [
+      group.id,
+      group,
+    ]),
+  );
+
+  const invitationGroups: InvitationGroup[] =
+    groups.map((group) => {
+      const primaryGuest =
+        group.guests.find(
+          (guest) => guest.is_primary,
+        );
+
+      return {
+        id: group.id,
+        name: group.name,
+
+        invitationCode:
+          group.invitation_code,
+
+        primaryGuestId:
+          primaryGuest?.id,
+
+        saveTheDateStatus:
+          group.save_the_date_status,
+
+        address:
+          buildGroupAddress(group),
+      };
+    });
+
+  const guestItems: GuestItem[] =
+    guests.map((guest) => {
+      const invitationGroup =
+        groupsById.get(
+          guest.invitation_group_id,
+        );
+
+      return {
+        id: guest.id,
+        name: guest.full_name,
+
+        preferredName:
+          guest.preferred_name ?? undefined,
+
+        phone:
+          guest.phone ?? undefined,
+
+        email:
+          guest.email ?? undefined,
+
+        group:
+          invitationGroup?.name ??
+          "Grupo não encontrado",
+
+        side: guest.side,
+
+        confirmation:
+          guest.confirmation_status,
+
+        invitationGroupId:
+          guest.invitation_group_id,
+
+        isPrimaryGuest:
+          guest.is_primary,
+
+        isChild:
+          guest.is_child,
+
+        relationship:
+          getGuestRelationship(
+            guest.is_primary,
+            guest.is_child,
+          ),
+
+        linkedGuestId:
+          guest.linked_guest_id ??
+          undefined,
+
+        relationshipLabel:
+          guest.relationship_label ??
+          undefined,
+
+        dietaryRestrictions:
+          guest.dietary_restrictions ??
+          undefined,
+
+        notes:
+          guest.notes ?? undefined,
+      };
+    });
+
   return (
     <GuestList
-      guests={guests}
-      invitationGroups={invitationGroups}
+      guests={guestItems}
+      invitationGroups={
+        invitationGroups
+      }
+      brideName={wedding.brideName}
+      groomName={wedding.groomName}
     />
   );
 }

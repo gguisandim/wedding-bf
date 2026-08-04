@@ -1156,3 +1156,931 @@
     justify-self: flex-start;
   }
 }
+
+/* ======================================================
+   CADASTRO DE CONVIDADO
+====================================================== */
+
+.feedback {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 950;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(420px, calc(100vw - 44px));
+  padding: 12px 15px;
+  border: 1px solid rgba(146, 150, 111, 0.28);
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #5e6448;
+  background: #fffdf9;
+  box-shadow: 0 16px 42px rgba(37, 47, 73, 0.16);
+}
+
+.feedback > span {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--dashboard-accent, #92966f);
+}
+
+.addGuestForm {
+  padding: 22px 24px 24px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.formGrid label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.formGrid label > span {
+  margin-bottom: 7px;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--dashboard-text, #302b27);
+}
+
+.formGrid input,
+.formGrid select,
+.formGrid textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid rgba(222, 214, 202, 0.95);
+  border-radius: 9px;
+  outline: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--dashboard-text, #302b27);
+  background: #fffdf9;
+}
+
+.formGrid textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.formGrid input:focus,
+.formGrid select:focus,
+.formGrid textarea:focus {
+  border-color: rgba(133, 155, 186, 0.76);
+  box-shadow: 0 0 0 3px rgba(174, 190, 213, 0.15);
+}
+
+.formGrid small {
+  margin-top: 6px;
+  font-size: 8px;
+  line-height: 1.45;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.fullField {
+  grid-column: 1 / -1;
+}
+
+.formDivider {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid rgba(222, 214, 202, 0.7);
+  font-size: 10px;
+  font-weight: 750;
+  color: var(--dashboard-primary, #404d77);
+}
+
+.codeField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.codeField button {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid rgba(133, 155, 186, 0.3);
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.1);
+  cursor: pointer;
+}
+
+.checkboxGroup {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkboxField {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(222, 214, 202, 0.8);
+  border-radius: 9px;
+  background: rgba(247, 245, 239, 0.48);
+  cursor: pointer;
+}
+
+.checkboxField input {
+  width: 16px;
+  min-height: 16px;
+  height: 16px;
+  padding: 0;
+  accent-color: var(--dashboard-primary, #404d77);
+}
+
+.checkboxField > span {
+  margin: 0 !important;
+  font-size: 9px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.modalError {
+  padding: 11px 12px;
+  margin-top: 17px;
+  border: 1px solid rgba(178, 122, 103, 0.27);
+  border-radius: 9px;
+  font-size: 10px;
+  color: #804f40;
+  background: rgba(178, 122, 103, 0.09);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid rgba(222, 214, 202, 0.95);
+  color: var(--dashboard-text-secondary, #716c65);
+  background: #fffdf9;
+}
+
+.saveButton {
+  border: 0;
+  color: #ffffff;
+  background: var(--dashboard-primary, #404d77);
+}
+
+.cancelButton:disabled,
+.saveButton:disabled,
+.closeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+@media (max-width: 760px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullField,
+  .formDivider,
+  .checkboxGroup {
+    grid-column: 1;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .saveButton {
+    width: 100%;
+  }
+}
+
+
+/* ======================================================
+   AJUSTES DO MODAL DE CADASTRO
+====================================================== */
+
+.modalOverlay {
+  align-items: start;
+  overflow-y: auto;
+  padding: clamp(18px, 4vh, 42px) 20px;
+}
+
+.addGuestModal {
+  display: flex;
+  flex-direction: column;
+  width: min(820px, 100%);
+  max-height: calc(100dvh - clamp(36px, 8vh, 84px));
+  overflow: hidden;
+}
+
+.addGuestModal .modalHeader {
+  flex: 0 0 auto;
+  padding: 24px 28px 20px;
+}
+
+.addGuestModal .modalHeader h2 {
+  font-size: clamp(28px, 3.2vw, 36px);
+  line-height: 1.05;
+}
+
+.addGuestModal .modalHeader p {
+  max-width: 620px;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.addGuestModal .closeButton {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  font-size: 22px;
+}
+
+.addGuestForm {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 28px 28px;
+  scrollbar-gutter: stable;
+}
+
+.formGrid {
+  gap: 20px 18px;
+}
+
+.formGrid label > span,
+.invitationTypeSection legend {
+  margin-bottom: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  color: var(--dashboard-text, #302b27);
+}
+
+.formGrid input,
+.formGrid select,
+.formGrid textarea {
+  min-height: 48px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.formGrid textarea {
+  min-height: 96px;
+}
+
+.formGrid small {
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.formDivider {
+  margin-top: 2px;
+  padding-top: 18px;
+  font-size: 13px;
+}
+
+.invitationTypeSection {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.invitationTypeSection legend {
+  display: block;
+  width: 100%;
+  padding: 0;
+}
+
+.invitationTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.invitationTypeCard {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px solid rgba(222, 214, 202, 0.95);
+  border-radius: 14px;
+  text-align: left;
+  color: var(--dashboard-text, #302b27);
+  background: #fffdf9;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.invitationTypeCard:hover {
+  border-color: rgba(64, 77, 119, 0.34);
+  transform: translateY(-1px);
+}
+
+.invitationTypeCardActive {
+  border-color: rgba(64, 77, 119, 0.72);
+  background: rgba(174, 190, 213, 0.13);
+  box-shadow: 0 0 0 3px rgba(174, 190, 213, 0.14);
+}
+
+.invitationTypeIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dashboard-primary, #404d77);
+  background: rgba(174, 190, 213, 0.18);
+}
+
+.invitationTypeCardActive .invitationTypeIcon {
+  color: #fff;
+  background: var(--dashboard-primary, #404d77);
+}
+
+.invitationTypeCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 5px;
+}
+
+.invitationTypeCopy strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.invitationTypeCopy small {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.invitationConfiguration {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(222, 214, 202, 0.82);
+  border-radius: 14px;
+  background: rgba(247, 245, 239, 0.42);
+}
+
+.configurationHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.configurationHeader > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.configurationHeader strong {
+  font-size: 13px;
+  color: var(--dashboard-text, #302b27);
+}
+
+.configurationHeader span {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--dashboard-text-secondary, #716c65);
+}
+
+.configurationGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.configurationGrid label {
+  min-width: 0;
+}
+
+.groupModeTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid rgba(222, 214, 202, 0.88);
+  border-radius: 12px;
+  background: #fffdf9;
+}
+
+.groupModeTabs button {
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--dashboard-text-secondary, #716c65);
+  background: transparent;
+  cursor: pointer;
+}
+
+.groupModeTabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.groupModeTabs .groupModeTabActive {
+  color: #fff;
+  background: var(--dashboard-primary, #404d77);
+  box-shadow: 0 4px 12px rgba(64, 77, 119, 0.2);
+}
+
+.codeField {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.codeField button {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.checkboxGroup {
+  gap: 10px;
+}
+
+.checkboxField {
+  min-height: 46px;
+  padding: 11px 13px;
+  border-radius: 11px;
+}
+
+.checkboxField > span {
+  font-size: 12px !important;
+}
+
+.modalError {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.modalActions {
+  position: sticky;
+  bottom: -28px;
+  z-index: 3;
+  margin: 24px -28px -28px;
+  padding: 16px 28px;
+  border-top: 1px solid rgba(222, 214, 202, 0.82);
+  background: rgba(255, 253, 249, 0.96);
+  backdrop-filter: blur(10px);
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 11px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .modalOverlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .addGuestModal {
+    width: 100%;
+    max-height: 94dvh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .addGuestModal .modalHeader {
+    padding: 20px 18px 16px;
+  }
+
+  .addGuestModal .modalHeader h2 {
+    font-size: 28px;
+  }
+
+  .addGuestModal .modalHeader p {
+    font-size: 12px;
+  }
+
+  .addGuestForm {
+    padding: 20px 18px 22px;
+  }
+
+  .formGrid,
+  .invitationTypeGrid,
+  .configurationGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .invitationTypeCard {
+    min-height: 84px;
+  }
+
+  .groupModeTabs {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    bottom: -22px;
+    margin: 22px -18px -22px;
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+  }
+}
+/* ======================================================
+   EDIÇÃO E EXCLUSÃO DE CONVIDADOS
+====================================================== */
+
+.editGuestSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 16px 18px;
+  margin-bottom: 22px;
+
+  border: 1px solid rgba(133, 155, 186, 0.28);
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(220, 232, 241, 0.34),
+      rgba(255, 253, 249, 0.9)
+    );
+}
+
+.editGuestSummary > div {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.editGuestSummary span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: var(
+    --dashboard-text-secondary,
+    #716c65
+  );
+}
+
+.editGuestSummary strong {
+  margin-top: 5px;
+
+  overflow: hidden;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+  font-size: 18px;
+  font-weight: 400;
+
+  color: var(
+    --dashboard-primary,
+    #404d77
+  );
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editGuestSummary small {
+  margin-top: 4px;
+
+  font-size: 10px;
+
+  color: var(
+    --dashboard-text-secondary,
+    #716c65
+  );
+}
+
+.editGuestSummary button {
+  flex-shrink: 0;
+
+  min-height: 38px;
+  padding: 8px 13px;
+
+  border: 1px solid
+    rgba(133, 155, 186, 0.3);
+  border-radius: 9px;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+
+  color: var(
+    --dashboard-primary,
+    #404d77
+  );
+
+  background:
+    rgba(255, 253, 249, 0.9);
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.editGuestSummary button:hover {
+  color: #ffffff;
+
+  border-color:
+    var(
+      --dashboard-primary,
+      #404d77
+    );
+
+  background:
+    var(
+      --dashboard-primary,
+      #404d77
+    );
+}
+
+.primaryGuestNotice {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 34px;
+  padding: 7px 11px;
+
+  border: 1px solid
+    rgba(146, 150, 111, 0.28);
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  color: #606646;
+  background:
+    rgba(146, 150, 111, 0.14);
+}
+
+.modalActions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalPrimaryActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.deleteButton {
+  min-height: 44px;
+  padding: 10px 18px;
+
+  border: 1px solid
+    rgba(178, 122, 103, 0.34);
+  border-radius: 11px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #8c5545;
+  background:
+    rgba(178, 122, 103, 0.08);
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.deleteButton:hover {
+  color: #ffffff;
+  border-color: #9a5f4d;
+  background: #9a5f4d;
+}
+
+.deleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+@media (max-width: 760px) {
+  .editGuestSummary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .editGuestSummary button {
+    width: 100%;
+  }
+
+  .modalActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .modalPrimaryActions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+
+  .deleteButton,
+  .modalPrimaryActions
+    .cancelButton,
+  .modalPrimaryActions
+    .saveButton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editGuestSummary button,
+  .deleteButton {
+    transition: none;
+  }
+}
+
+/* ======================================================
+   PROTEÇÃO DO TITULAR DO CONVITE
+====================================================== */
+
+.primaryTransferProtection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr);
+  gap: 18px;
+
+  padding: 18px;
+  margin-top: 4px;
+
+  border: 1px solid rgba(211, 173, 79, 0.34);
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 239, 195, 0.42),
+      rgba(255, 253, 249, 0.94)
+    );
+}
+
+.primaryTransferProtection > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.primaryTransferIcon {
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  color: #ffffff;
+  background: #b18c37;
+}
+
+.primaryTransferProtection strong {
+  display: block;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: var(
+    --dashboard-text,
+    #302b27
+  );
+}
+
+.primaryTransferProtection p {
+  max-width: 620px;
+  margin: 6px 0 0;
+
+  font-size: 11px;
+  line-height: 1.55;
+
+  color: var(
+    --dashboard-text-secondary,
+    #716c65
+  );
+}
+
+.primaryTransferProtection label {
+  align-self: center;
+}
+
+.primaryTransferProtection label > span {
+  display: block;
+  margin-bottom: 7px;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+
+  color: var(
+    --dashboard-primary,
+    #404d77
+  );
+}
+
+.primaryTransferProtection select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+
+  border: 1px solid rgba(177, 140, 55, 0.34);
+  border-radius: 10px;
+
+  font: inherit;
+  font-size: 12px;
+
+  color: var(
+    --dashboard-text,
+    #302b27
+  );
+  background: #fffdf9;
+}
+
+.primaryTransferProtection select:focus {
+  outline: 0;
+  border-color: rgba(177, 140, 55, 0.72);
+  box-shadow: 0 0 0 3px rgba(211, 173, 79, 0.17);
+}
+
+@media (max-width: 760px) {
+  .primaryTransferProtection {
+    grid-template-columns: 1fr;
+  }
+}

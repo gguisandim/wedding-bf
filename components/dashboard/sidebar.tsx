@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
 import { formatWeddingDateCompact } from "@/lib/wedding/presentation";
 
+import shellStyles from "./dashboard-shell.module.css";
+
 type WeddingRole =
   Database["public"]["Enums"]["wedding_member_role"];
 
@@ -22,7 +24,7 @@ type MenuGroup = {
   items: MenuItem[];
 };
 
-type SidebarWedding = {
+export type SidebarWedding = {
   brideName: string;
   groomName: string;
   weddingDate: string;
@@ -32,6 +34,7 @@ type SidebarWedding = {
 
 type SidebarProps = {
   wedding: SidebarWedding;
+  onCollapse: () => void;
 };
 
 const menuGroups: MenuGroup[] = [
@@ -110,7 +113,10 @@ const menuGroups: MenuGroup[] = [
   },
 ];
 
-const memberTypeLabels: Record<WeddingMemberType, string> = {
+const memberTypeLabels: Record<
+  WeddingMemberType,
+  string
+> = {
   bride: "Noiva",
   groom: "Noivo",
   planner: "Cerimonialista",
@@ -118,13 +124,18 @@ const memberTypeLabels: Record<WeddingMemberType, string> = {
   other: "Membro",
 };
 
-const roleLabels: Record<WeddingRole, string> = {
+const roleLabels: Record<
+  WeddingRole,
+  string
+> = {
   owner: "Proprietário",
   admin: "Administrador",
   viewer: "Visualização",
 };
 
-function getMemberName(wedding: SidebarWedding): string {
+function getMemberName(
+  wedding: SidebarWedding,
+): string {
   if (wedding.memberType === "bride") {
     return wedding.brideName;
   }
@@ -133,22 +144,30 @@ function getMemberName(wedding: SidebarWedding): string {
     return wedding.groomName;
   }
 
-  return memberTypeLabels[wedding.memberType];
+  return memberTypeLabels[
+    wedding.memberType
+  ];
 }
 
-function getMemberInitial(wedding: SidebarWedding): string {
-  const memberName = getMemberName(wedding);
-
-  return memberName.charAt(0).toUpperCase();
+function getMemberInitial(
+  wedding: SidebarWedding,
+): string {
+  return getMemberName(wedding)
+    .charAt(0)
+    .toUpperCase();
 }
 
 export default function Sidebar({
   wedding,
+  onCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
 
-  const memberName = getMemberName(wedding);
-  const memberInitial = getMemberInitial(wedding);
+  const memberName =
+    getMemberName(wedding);
+
+  const memberInitial =
+    getMemberInitial(wedding);
 
   function isActive(href: string) {
     if (href === "/painel") {
@@ -160,6 +179,20 @@ export default function Sidebar({
 
   return (
     <aside className="dashboard-sidebar">
+      <button
+        type="button"
+        className={
+          shellStyles.collapseButton
+        }
+        aria-label="Recolher menu lateral"
+        title="Recolher menu lateral"
+        onClick={onCollapse}
+      >
+        <span aria-hidden="true">
+          ‹
+        </span>
+      </button>
+
       <div className="sidebar-header">
         <span className="sidebar-eyebrow">
           Grande Dia
@@ -169,7 +202,8 @@ export default function Sidebar({
           href="/painel"
           className="sidebar-couple"
         >
-          {wedding.brideName} &amp;{" "}
+          {wedding.brideName}
+          {" & "}
           {wedding.groomName}
         </Link>
 
@@ -195,7 +229,8 @@ export default function Sidebar({
 
             <div className="sidebar-group-items">
               {group.items.map((item) => {
-                const active = isActive(item.href);
+                const active =
+                  isActive(item.href);
 
                 return (
                   <Link
@@ -207,12 +242,16 @@ export default function Sidebar({
                         : ""
                     }`}
                     aria-current={
-                      active ? "page" : undefined
+                      active
+                        ? "page"
+                        : undefined
                     }
                   >
                     <span className="sidebar-link-indicator" />
 
-                    <span>{item.label}</span>
+                    <span>
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
@@ -233,9 +272,17 @@ export default function Sidebar({
           <strong>{memberName}</strong>
 
           <span>
-            {memberTypeLabels[wedding.memberType]}
+            {
+              memberTypeLabels[
+                wedding.memberType
+              ]
+            }
             {" · "}
-            {roleLabels[wedding.role]}
+            {
+              roleLabels[
+                wedding.role
+              ]
+            }
           </span>
         </div>
       </div>

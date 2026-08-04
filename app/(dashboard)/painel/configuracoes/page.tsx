@@ -3,6 +3,33 @@ import SettingsManager, {
 } from "@/components/dashboard/configuracoes/settings-manager";
 
 import { requireCurrentWedding } from "@/lib/auth/get-current-wedding";
+import type { UpdateWeddingInput } from "@/lib/validations/wedding";
+
+type WeddingTimezone =
+  UpdateWeddingInput["timezone"];
+
+const supportedTimezones: WeddingTimezone[] = [
+  "America/Belem",
+  "America/Sao_Paulo",
+  "America/Manaus",
+];
+
+function normalizeWeddingTimezone(
+  timezone: string,
+): WeddingTimezone {
+  const normalizedTimezone =
+    timezone as WeddingTimezone;
+
+  if (
+    supportedTimezones.includes(
+      normalizedTimezone,
+    )
+  ) {
+    return normalizedTimezone;
+  }
+
+  return "America/Belem";
+}
 
 function createPublicSlug(
   brideName: string,
@@ -17,7 +44,8 @@ function createPublicSlug(
 }
 
 export default async function SettingsPage() {
-  const wedding = await requireCurrentWedding();
+  const wedding =
+    await requireCurrentWedding();
 
   const settings: WeddingSettings = {
     event: {
@@ -27,7 +55,8 @@ export default async function SettingsPage() {
       weddingDate: wedding.weddingDate,
 
       weddingTime:
-        wedding.weddingTime?.slice(0, 5) ?? "",
+        wedding.weddingTime?.slice(0, 5) ??
+        "",
 
       venueName:
         wedding.venueName ?? "",
@@ -35,7 +64,11 @@ export default async function SettingsPage() {
       venueAddress:
         wedding.venueAddress ?? "",
 
-      timezone: wedding.timezone,
+      timezone:
+        normalizeWeddingTimezone(
+          wedding.timezone,
+        ),
+
       language: "pt-BR",
     },
 

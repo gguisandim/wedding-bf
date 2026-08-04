@@ -1,0 +1,150 @@
+.collapseButton,
+.openButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid
+    rgba(105, 131, 169, 0.32);
+
+  color: var(
+    --dashboard-primary,
+    #404d77
+  );
+
+  background:
+    rgba(255, 253, 248, 0.97);
+
+  box-shadow:
+    0 8px 22px
+    rgba(48, 61, 89, 0.13);
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.collapseButton:hover,
+.openButton:hover {
+  color: #ffffff;
+
+  border-color:
+    var(
+      --dashboard-primary,
+      #404d77
+    );
+
+  background:
+    var(
+      --dashboard-primary,
+      #404d77
+    );
+}
+
+.collapseButton:active,
+.openButton:active {
+  transform: translateY(1px);
+}
+
+.collapseButton:focus-visible,
+.openButton:focus-visible {
+  outline: 3px solid
+    rgba(169, 191, 217, 0.52);
+
+  outline-offset: 3px;
+}
+
+.collapseButton {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  z-index: 30;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  border-radius:
+    7px 13px 7px 13px;
+
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.openButton {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 900;
+
+  gap: 8px;
+
+  min-height: 42px;
+  padding: 8px 14px;
+
+  border-radius:
+    7px 14px 7px 14px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.openButton > span:first-child {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mobileBackdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .openButton {
+    top: 12px;
+    left: 12px;
+  }
+
+  .mobileBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 680;
+
+    display: block;
+
+    padding: 0;
+    border: 0;
+
+    background:
+      rgba(31, 37, 52, 0.36);
+
+    backdrop-filter: blur(2px);
+
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 560px) {
+  .openButton {
+    width: 42px;
+    padding-inline: 0;
+  }
+
+  .openButtonLabel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapseButton,
+  .openButton {
+    transition: none;
+  }
+}

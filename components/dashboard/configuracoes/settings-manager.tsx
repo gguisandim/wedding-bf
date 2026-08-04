@@ -8,6 +8,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { updateWeddingAction } from "@/lib/actions/wedding";
+import type { UpdateWeddingInput } from "@/lib/validations/wedding";
 
 import styles from "./settings-manager.module.css";
 
@@ -31,7 +32,7 @@ export type WeddingSettings = {
     venueName: string;
     venueAddress: string;
 
-    timezone: string;
+    timezone: UpdateWeddingInput["timezone"];
     language: string;
   };
 
@@ -600,7 +601,8 @@ export default function SettingsManager({
                 onChange={(event) =>
                   updateEvent(
                     "timezone",
-                    event.target.value,
+                    event.target
+                      .value as UpdateWeddingInput["timezone"],
                   )
                 }
               >
