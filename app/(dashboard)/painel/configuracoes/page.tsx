@@ -2,116 +2,132 @@ import SettingsManager, {
   type WeddingSettings,
 } from "@/components/dashboard/configuracoes/settings-manager";
 
-const settings: WeddingSettings = {
-  event: {
-    brideName: "Bárbara",
-    groomName: "Felipe",
+import { requireCurrentWedding } from "@/lib/auth/get-current-wedding";
 
-    weddingDate: "2027-08-07",
-    weddingTime: "17:00",
+function createPublicSlug(
+  brideName: string,
+  groomName: string,
+): string {
+  return `${brideName}-${groomName}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
-    venueName: "Solar do Bosque",
+export default async function SettingsPage() {
+  const wedding = await requireCurrentWedding();
 
-    venueAddress:
-      "Belém, Pará",
+  const settings: WeddingSettings = {
+    event: {
+      brideName: wedding.brideName,
+      groomName: wedding.groomName,
 
-    timezone: "America/Belem",
-    language: "pt-BR",
-  },
+      weddingDate: wedding.weddingDate,
 
-  invitation: {
-    publicSlug: "barbara-e-felipe",
+      weddingTime:
+        wedding.weddingTime?.slice(0, 5) ?? "",
 
-    rsvpDeadline: "2027-05-18",
+      venueName:
+        wedding.venueName ?? "",
 
-    requireInvitationCode: true,
-    showCountdown: true,
+      venueAddress:
+        wedding.venueAddress ?? "",
 
-    allowGuestMessage: true,
-    allowDecline: true,
+      timezone: wedding.timezone,
+      language: "pt-BR",
+    },
 
-    showVenueMap: true,
+    invitation: {
+      publicSlug: createPublicSlug(
+        wedding.brideName,
+        wedding.groomName,
+      ),
 
-    showGuestNamesInConfirmation:
-      true,
-  },
+      rsvpDeadline: "",
 
-  gifts: {
-    reservationMinutes: 30,
+      requireInvitationCode: false,
+      showCountdown: false,
 
-    showGiftedExperiences: true,
-    showGiverName: true,
-    showGiverMessage: true,
+      allowGuestMessage: false,
+      allowDecline: false,
 
-    allowAnonymousGift: true,
-    hideReservedGift: false,
+      showVenueMap: false,
 
-    notifyOnReservation: true,
-    notifyOnPayment: true,
-  },
+      showGuestNamesInConfirmation: false,
+    },
 
-  finance: {
-    budgetLimit: 50000,
-    currency: "BRL",
+    gifts: {
+      reservationMinutes: 0,
 
-    supplierReminderDays: 7,
+      showGiftedExperiences: false,
+      showGiverName: false,
+      showGiverMessage: false,
 
-    warnWhenBudgetExceeded: true,
+      allowAnonymousGift: false,
+      hideReservedGift: false,
 
-    syncSupplierPayments: true,
+      notifyOnReservation: false,
+      notifyOnPayment: false,
+    },
 
-    includeEstimatedExpenses: true,
-  },
+    finance: {
+      budgetLimit: 0,
+      currency: wedding.currency,
 
-  notifications: {
-    email: "barbspraxedes@gmail.com",
+      supplierReminderDays: 0,
 
-    newRsvp: true,
-    changedRsvp: true,
+      warnWhenBudgetExceeded: false,
 
-    giftReserved: true,
-    giftPaid: true,
+      syncSupplierPayments: false,
 
-    supplierDue: true,
-    weeklySummary: false,
-  },
+      includeEstimatedExpenses: false,
+    },
 
-  privacy: {
-    invitationVisibility: "code",
+    notifications: {
+      email: "",
 
-    allowSearchEngines: false,
-    collectAnalytics: true,
+      newRsvp: false,
+      changedRsvp: false,
 
-    sessionTimeoutMinutes: 120,
+      giftReserved: false,
+      giftPaid: false,
 
-    adminEmails:
-      "barbspraxedes@gmail.com",
+      supplierDue: false,
+      weeklySummary: false,
+    },
 
-    hideGuestListFromPublic: true,
+    privacy: {
+      invitationVisibility: "code",
 
-    hideGiftValuesAfterPayment:
-      false,
-  },
+      allowSearchEngines: false,
+      collectAnalytics: false,
 
-  integrations: {
-    paymentProvider: "none",
+      sessionTimeoutMinutes: 0,
 
-    storageProvider: "supabase",
+      adminEmails: "",
 
-    enableWebhook: false,
+      hideGuestListFromPublic: false,
 
-    webhookUrl:
-      "https://wedding-bf.vercel.app/api/payments/webhook",
+      hideGiftValuesAfterPayment: false,
+    },
 
-    receiptBucket:
-      "supplier-receipts",
+    integrations: {
+      paymentProvider: "none",
 
-    photoBucket:
-      "wedding-photos",
-  },
-};
+      storageProvider: "supabase",
 
-export default function SettingsPage() {
+      enableWebhook: false,
+
+      webhookUrl: "",
+
+      receiptBucket: "",
+
+      photoBucket: "",
+    },
+  };
+
   return (
     <SettingsManager
       initialSettings={settings}

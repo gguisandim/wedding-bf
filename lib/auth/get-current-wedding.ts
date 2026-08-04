@@ -1,3 +1,6 @@
+import "server-only";
+
+import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import type { Database } from "@/lib/supabase/database.types";
@@ -28,80 +31,80 @@ export type CurrentWedding = {
   memberType: WeddingMemberType;
 };
 
-export async function getCurrentWedding(): Promise<
-  CurrentWedding | null
-> {
-  const supabase = await createClient();
+export const getCurrentWedding = cache(
+  async (): Promise<CurrentWedding | null> => {
+    const supabase = await createClient();
 
-  const {
-    data: claimsData,
-    error: claimsError,
-  } = await supabase.auth.getClaims();
+    const {
+      data: claimsData,
+      error: claimsError,
+    } = await supabase.auth.getClaims();
 
-  const userId = claimsData?.claims?.sub;
+    const userId = claimsData?.claims?.sub;
 
-  if (claimsError || !userId) {
-    return null;
-  }
+    if (claimsError || !userId) {
+      return null;
+    }
 
-  const { data, error } = await supabase
-    .from("wedding_members")
-    .select(`
-      role,
-      member_type,
-      wedding:weddings (
-        id,
-        bride_name,
-        groom_name,
-        wedding_date,
-        wedding_time,
-        venue_name,
-        venue_address,
-        timezone,
-        currency
-      )
-    `)
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("wedding_members")
+      .select(`
+        role,
+        member_type,
+        wedding:weddings (
+          id,
+          bride_name,
+          groom_name,
+          wedding_date,
+          wedding_time,
+          venue_name,
+          venue_address,
+          timezone,
+          currency
+        )
+      `)
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(
-      `Não foi possível carregar o casamento: ${error.message}`,
-    );
-  }
+    if (error) {
+      throw new Error(
+        `Não foi possível carregar o casamento: ${error.message}`,
+      );
+    }
 
-  if (!data || !data.wedding) {
-    return null;
-  }
+    if (!data || !data.wedding) {
+      return null;
+    }
 
-  const wedding = Array.isArray(data.wedding)
-    ? data.wedding[0]
-    : data.wedding;
+    const wedding = Array.isArray(data.wedding)
+      ? data.wedding[0]
+      : data.wedding;
 
-  if (!wedding) {
-    return null;
-  }
+    if (!wedding) {
+      return null;
+    }
 
-  return {
-    id: wedding.id,
+    return {
+      id: wedding.id,
 
-    brideName: wedding.bride_name,
-    groomName: wedding.groom_name,
+      brideName: wedding.bride_name,
+      groomName: wedding.groom_name,
 
-    weddingDate: wedding.wedding_date,
-    weddingTime: wedding.wedding_time,
+      weddingDate: wedding.wedding_date,
+      weddingTime: wedding.wedding_time,
 
-    venueName: wedding.venue_name,
-    venueAddress: wedding.venue_address,
+      venueName: wedding.venue_name,
+      venueAddress: wedding.venue_address,
 
-    timezone: wedding.timezone,
-    currency: wedding.currency,
+      timezone: wedding.timezone,
+      currency: wedding.currency,
 
-    role: data.role,
-    memberType: data.member_type,
-  };
-}
+      role: data.role,
+      memberType: data.member_type,
+    };
+  },
+);
 
 export async function requireCurrentWedding(): Promise<CurrentWedding> {
   const wedding = await getCurrentWedding();

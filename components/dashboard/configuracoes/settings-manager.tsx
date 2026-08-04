@@ -5,6 +5,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
+
+import { updateWeddingAction } from "@/lib/actions/wedding";
 
 import styles from "./settings-manager.module.css";
 
@@ -257,6 +260,8 @@ function normalizeSlug(value: string) {
 export default function SettingsManager({
   initialSettings,
 }: SettingsManagerProps) {
+  const router = useRouter();
+
   const [activeSection, setActiveSection] =
     useState<SettingsSection>("event");
 
@@ -405,21 +410,59 @@ export default function SettingsManager({
     }));
   }
 
-  function saveSettings() {
+  async function saveSettings() {
     if (!hasChanges || isSaving) {
       return;
     }
 
     setIsSaving(true);
+    setFeedback(null);
 
-    window.setTimeout(() => {
+    try {
+      const result = await updateWeddingAction({
+        brideName:
+          settings.event.brideName,
+
+        groomName:
+          settings.event.groomName,
+
+        weddingDate:
+          settings.event.weddingDate,
+
+        weddingTime:
+          settings.event.weddingTime,
+
+        venueName:
+          settings.event.venueName,
+
+        venueAddress:
+          settings.event.venueAddress,
+
+        timezone:
+          settings.event.timezone,
+      });
+
+      if (!result.success) {
+        showFeedback(result.message);
+        return;
+      }
+
       setSavedSettings(settings);
-      setIsSaving(false);
+      showFeedback(result.message);
+
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao salvar configurações:",
+        error,
+      );
 
       showFeedback(
-        "Configurações salvas.",
+        "Não foi possível salvar as configurações.",
       );
-    }, 600);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function discardChanges() {
@@ -1833,8 +1876,8 @@ export default function SettingsManager({
             </span>
 
             <p>
-              Nesta versão, as preferências ficam
-              apenas no navegador.
+              Nesta etapa, somente os dados da seção
+              Evento são persistidos no Supabase.
             </p>
           </div>
         </aside>
@@ -1871,8 +1914,8 @@ export default function SettingsManager({
           </strong>
 
           <span>
-            As configurações serão conectadas ao
-            Supabase posteriormente.
+            Somente os dados da seção Evento são
+            persistidos no Supabase nesta etapa.
           </span>
         </div>
 

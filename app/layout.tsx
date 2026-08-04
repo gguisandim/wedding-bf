@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Jost } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Jost,
+} from "next/font/google";
+
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -19,7 +23,8 @@ const jost = Jost({
 
 export const metadata: Metadata = {
   title: "Painel do Casamento",
-  description: "Sistema de organização do casamento",
+  description:
+    "Sistema de organização do casamento",
 };
 
 export default function RootLayout({
