@@ -13,6 +13,7 @@ import {
   createInvitationGroupAction,
   updateGuestAction,
 } from "@/lib/actions/guests";
+import { updateInvitationGroupConfirmationAction } from "@/lib/actions/rsvp";
 import { deleteGuestWithPrimaryTransferAction } from "@/lib/actions/guest-deletion";
 
 import styles from "./guest-list.module.css";
@@ -343,6 +344,13 @@ export default function GuestList({
     setReplacementPrimaryGuestId,
   ] = useState("");
 
+  const [
+    updatingGroupConfirmation,
+    setUpdatingGroupConfirmation,
+  ] = useState<GuestConfirmation | null>(
+    null,
+  );
+
   useEffect(() => {
     setGuests(initialGuests ?? []);
   }, [initialGuests]);
@@ -544,6 +552,63 @@ export default function GuestList({
     window.setTimeout(() => {
       setFeedback(null);
     }, 3000);
+  }
+
+
+  async function updateInvitationGroupConfirmation(
+    confirmationStatus: GuestConfirmation,
+  ) {
+    if (
+      !selectedInvitationGroup ||
+      updatingGroupConfirmation !== null
+    ) {
+      return;
+    }
+
+    setUpdatingGroupConfirmation(
+      confirmationStatus,
+    );
+
+    try {
+      const result =
+        await updateInvitationGroupConfirmationAction({
+          invitationGroupId:
+            selectedInvitationGroup.id,
+          confirmationStatus,
+        });
+
+      if (!result.success) {
+        showFeedback(result.message);
+        return;
+      }
+
+      setGuests((currentGuests) =>
+        currentGuests.map((guestItem) =>
+          guestItem.invitationGroupId ===
+          selectedInvitationGroup.id
+            ? {
+                ...guestItem,
+                confirmation:
+                  confirmationStatus,
+              }
+            : guestItem,
+        ),
+      );
+
+      showFeedback(result.message);
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao atualizar RSVP coletivo:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível atualizar o RSVP do grupo.",
+      );
+    } finally {
+      setUpdatingGroupConfirmation(null);
+    }
   }
 
   function openAddGuestModal() {
@@ -2465,27 +2530,57 @@ export default function GuestList({
                 <div className={styles.groupConfirmationActions}>
                   <button
                     type="button"
-                    disabled
-                    title="A atualização do RSVP será conectada ao Supabase na próxima etapa."
+                    disabled={
+                      updatingGroupConfirmation !== null ||
+                      selectedGroupGuests.length === 0
+                    }
+                    onClick={() =>
+                      updateInvitationGroupConfirmation(
+                        "confirmed",
+                      )
+                    }
                   >
-                    Confirmar todos
+                    {updatingGroupConfirmation ===
+                    "confirmed"
+                      ? "Atualizando..."
+                      : "Confirmar todos"}
                   </button>
 
                   <button
                     type="button"
-                    disabled
-                    title="A atualização do RSVP será conectada ao Supabase na próxima etapa."
+                    disabled={
+                      updatingGroupConfirmation !== null ||
+                      selectedGroupGuests.length === 0
+                    }
+                    onClick={() =>
+                      updateInvitationGroupConfirmation(
+                        "pending",
+                      )
+                    }
                   >
-                    Colocar todos como aguardando
+                    {updatingGroupConfirmation ===
+                    "pending"
+                      ? "Atualizando..."
+                      : "Colocar todos como aguardando"}
                   </button>
 
                   <button
                     type="button"
                     className={styles.declineGroupButton}
-                    disabled
-                    title="A atualização do RSVP será conectada ao Supabase na próxima etapa."
+                    disabled={
+                      updatingGroupConfirmation !== null ||
+                      selectedGroupGuests.length === 0
+                    }
+                    onClick={() =>
+                      updateInvitationGroupConfirmation(
+                        "declined",
+                      )
+                    }
                   >
-                    Marcar todos como ausentes
+                    {updatingGroupConfirmation ===
+                    "declined"
+                      ? "Atualizando..."
+                      : "Marcar todos como ausentes"}
                   </button>
                 </div>
               </section>

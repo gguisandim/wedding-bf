@@ -1,355 +1,489 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
 
-import styles from "./rsvp.module.css";
+import {
+  updateGuestConfirmationAction,
+  updateInvitationGroupConfirmationAction,
+  type RsvpConfirmationStatus,
+} from "@/lib/actions/rsvp";
 
-export type RSVPStatus =
-  | "confirmed"
-  | "pending"
-  | "declined";
+import styles from "./rsvp-manager.module.css";
 
-export type RSVPChannel =
-  | "site"
-  | "whatsapp"
-  | "phone"
-  | "manual";
-
-export type RSVPGuestMember = {
-  id: number;
+export type RsvpGuest = {
+  id: string;
   name: string;
-
-  isPrimary: boolean;
-
-  relationship?: string;
-  relatedToName?: string;
-
-  status: RSVPStatus;
-
-  dietaryRestriction?: string;
-  responseDate?: string;
-  responseChannel?: RSVPChannel;
-  note?: string;
-};
-
-export type RSVPInvitation = {
-  id: number;
-  groupName: string;
-
-  contactName: string;
+  preferredName?: string;
   phone?: string;
   email?: string;
 
-  lastReminder?: string;
+  side:
+    | "bride"
+    | "groom"
+    | "both";
 
-  members: RSVPGuestMember[];
+  confirmation:
+    RsvpConfirmationStatus;
+
+  isPrimary: boolean;
+  isChild: boolean;
+
+  relationshipLabel?: string;
+  respondedAt?: string;
 };
 
-type RSVPManagerProps = {
-  invitations: RSVPInvitation[];
+export type RsvpGroup = {
+  id: string;
+  name: string;
+  invitationCode: string;
+  guests: RsvpGuest[];
 };
 
-type InvitationFilter =
+type RsvpManagerProps = {
+  initialGroups: RsvpGroup[];
+  brideName: string;
+  groomName: string;
+};
+
+type GroupConfirmation =
+  | RsvpConfirmationStatus
+  | "mixed"
+  | "empty";
+
+type StatusFilter =
   | "all"
-  | "pending"
-  | "answered"
-  | "confirmed"
-  | "declined";
+  | RsvpConfirmationStatus
+  | "mixed";
 
-const statusLabels: Record<RSVPStatus, string> = {
+const confirmationLabels: Record<
+  RsvpConfirmationStatus,
+  string
+> = {
   confirmed: "Confirmado",
-  pending: "Aguardando resposta",
+  pending: "Aguardando",
   declined: "Não comparecerá",
 };
 
-const channelLabels: Record<RSVPChannel, string> = {
-  site: "Site",
-  whatsapp: "WhatsApp",
-  phone: "Telefone",
-  manual: "Registro manual",
-};
-
-const statusClassNames: Record<RSVPStatus, string> = {
-  confirmed: styles.statusConfirmed,
-  pending: styles.statusPending,
-  declined: styles.statusDeclined,
+const groupConfirmationLabels: Record<
+  GroupConfirmation,
+  string
+> = {
+  confirmed: "Todos confirmados",
+  pending: "Aguardando resposta",
+  declined: "Todos recusaram",
+  mixed: "Respostas diferentes",
+  empty: "Sem convidados",
 };
 
 function getInitials(name: string) {
   return name
-    .trim()
-    .split(/\s+/)
+    .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join("")
-    .toUpperCase();
+    .toLocaleUpperCase("pt-BR");
 }
 
-function getRelationshipLabel(
-  member: RSVPGuestMember,
-) {
-  if (member.isPrimary) {
-    return "Titular do convite";
+function getGroupConfirmation(
+  guests: RsvpGuest[],
+): GroupConfirmation {
+  if (guests.length === 0) {
+    return "empty";
   }
 
-  if (
-    member.relationship &&
-    member.relatedToName
-  ) {
-    return `${member.relationship} de ${member.relatedToName}`;
+  const confirmations =
+    new Set(
+      guests.map(
+        (guest) =>
+          guest.confirmation,
+      ),
+    );
+
+  if (confirmations.size > 1) {
+    return "mixed";
   }
 
-  return member.relationship || "Convidado vinculado";
+  return guests[0].confirmation;
 }
 
-export default function RSVPManager({
-  invitations,
-}: RSVPManagerProps) {
-  const [items, setItems] =
-    useState<RSVPInvitation[]>(invitations);
+function formatResponseDate(
+  value?: string,
+): string {
+  if (!value) {
+    return "Sem resposta registrada";
+  }
 
-  const [search, setSearch] = useState("");
+  const date = new Date(value);
 
-  const [filter, setFilter] =
-    useState<InvitationFilter>("all");
+  if (Number.isNaN(date.getTime())) {
+    return "Data não disponível";
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      dateStyle: "short",
+      timeStyle: "short",
+    },
+  ).format(date);
+}
+
+function getLatestResponse(
+  guests: RsvpGuest[],
+): string | undefined {
+  const dates = guests
+    .map((guest) => guest.respondedAt)
+    .filter(
+      (value): value is string =>
+        Boolean(value),
+    )
+    .sort(
+      (first, second) =>
+        new Date(second).getTime() -
+        new Date(first).getTime(),
+    );
+
+  return dates[0];
+}
+
+export default function RsvpManager({
+  initialGroups,
+  brideName,
+  groomName,
+}: RsvpManagerProps) {
+  const router = useRouter();
+
+  const [groups, setGroups] =
+    useState<RsvpGroup[]>(
+      initialGroups,
+    );
+
+  const [search, setSearch] =
+    useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>("all");
+
+  const [
+    expandedGroupIds,
+    setExpandedGroupIds,
+  ] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const [
+    updatingGuestId,
+    setUpdatingGuestId,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const [
+    updatingGroupId,
+    setUpdatingGroupId,
+  ] = useState<string | null>(
+    null,
+  );
 
   const [feedback, setFeedback] =
-    useState<string | null>(null);
+    useState<string | null>(
+      null,
+    );
 
-  const allMembers = useMemo(
+  useEffect(() => {
+    setGroups(initialGroups);
+  }, [initialGroups]);
+
+  const allGuests = useMemo(
     () =>
-      items.flatMap((invitation) =>
-        invitation.members.map((member) => ({
-          ...member,
-          invitationId: invitation.id,
-        })),
+      groups.flatMap(
+        (group) => group.guests,
       ),
-    [items],
+    [groups],
   );
 
-  const confirmedMembers = allMembers.filter(
-    (member) => member.status === "confirmed",
-  );
+  const totals = useMemo(() => {
+    const confirmed =
+      allGuests.filter(
+        (guest) =>
+          guest.confirmation ===
+          "confirmed",
+      ).length;
 
-  const pendingMembers = allMembers.filter(
-    (member) => member.status === "pending",
-  );
+    const pending =
+      allGuests.filter(
+        (guest) =>
+          guest.confirmation ===
+          "pending",
+      ).length;
 
-  const declinedMembers = allMembers.filter(
-    (member) => member.status === "declined",
-  );
+    const declined =
+      allGuests.filter(
+        (guest) =>
+          guest.confirmation ===
+          "declined",
+      ).length;
 
-  const answeredMembers =
-    confirmedMembers.length +
-    declinedMembers.length;
+    return {
+      total: allGuests.length,
+      confirmed,
+      pending,
+      declined,
+      answered:
+        confirmed + declined,
+    };
+  }, [allGuests]);
 
   const responsePercentage =
-    allMembers.length > 0
+    totals.total > 0
       ? Math.round(
-          (answeredMembers / allMembers.length) *
+          (totals.answered /
+            totals.total) *
             100,
         )
       : 0;
 
-  const invitationsWithPendingMembers =
-    items.filter((invitation) =>
-      invitation.members.some(
-        (member) => member.status === "pending",
-      ),
-    );
+  const filteredGroups = useMemo(() => {
+    const normalizedSearch =
+      search
+        .trim()
+        .toLocaleLowerCase(
+          "pt-BR",
+        );
 
-  const filteredInvitations = useMemo(() => {
-    const normalizedSearch = search
-      .trim()
-      .toLocaleLowerCase("pt-BR");
+    return groups.filter((group) => {
+      const groupConfirmation =
+        getGroupConfirmation(
+          group.guests,
+        );
 
-    return items.filter((invitation) => {
+      const searchableText = [
+        group.name,
+        group.invitationCode,
+        ...group.guests.flatMap(
+          (guest) => [
+            guest.name,
+            guest.preferredName,
+            guest.phone,
+            guest.email,
+            guest.relationshipLabel,
+          ],
+        ),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase(
+          "pt-BR",
+        );
+
       const matchesSearch =
         normalizedSearch.length === 0 ||
-        invitation.groupName
-          .toLocaleLowerCase("pt-BR")
-          .includes(normalizedSearch) ||
-        invitation.contactName
-          .toLocaleLowerCase("pt-BR")
-          .includes(normalizedSearch) ||
-        invitation.phone
-          ?.toLocaleLowerCase("pt-BR")
-          .includes(normalizedSearch) ||
-        invitation.email
-          ?.toLocaleLowerCase("pt-BR")
-          .includes(normalizedSearch) ||
-        invitation.members.some((member) =>
-          member.name
-            .toLocaleLowerCase("pt-BR")
-            .includes(normalizedSearch),
+        searchableText.includes(
+          normalizedSearch,
         );
 
-      const hasPending =
-        invitation.members.some(
-          (member) =>
-            member.status === "pending",
+      const matchesStatus =
+        statusFilter === "all" ||
+        groupConfirmation ===
+          statusFilter ||
+        (
+          statusFilter !==
+            "mixed" &&
+          group.guests.some(
+            (guest) =>
+              guest.confirmation ===
+              statusFilter,
+          )
         );
 
-      const hasConfirmed =
-        invitation.members.some(
-          (member) =>
-            member.status === "confirmed",
-        );
-
-      const hasDeclined =
-        invitation.members.some(
-          (member) =>
-            member.status === "declined",
-        );
-
-      const fullyAnswered =
-        invitation.members.every(
-          (member) =>
-            member.status !== "pending",
-        );
-
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "pending" && hasPending) ||
-        (filter === "answered" &&
-          fullyAnswered) ||
-        (filter === "confirmed" &&
-          hasConfirmed) ||
-        (filter === "declined" &&
-          hasDeclined);
-
-      return matchesSearch && matchesFilter;
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
     });
-  }, [items, search, filter]);
+  }, [
+    groups,
+    search,
+    statusFilter,
+  ]);
 
-  function showFeedback(message: string) {
+  function showFeedback(
+    message: string,
+  ) {
     setFeedback(message);
 
     window.setTimeout(() => {
       setFeedback(null);
-    }, 2800);
+    }, 3000);
   }
 
-  function updateMemberStatus(
-    invitationId: number,
-    memberId: number,
-    status: RSVPStatus,
+  function toggleGroup(
+    groupId: string,
   ) {
-    setItems((currentItems) =>
-      currentItems.map((invitation) => {
-        if (invitation.id !== invitationId) {
-          return invitation;
+    setExpandedGroupIds(
+      (current) => {
+        const next =
+          new Set(current);
+
+        if (next.has(groupId)) {
+          next.delete(groupId);
+        } else {
+          next.add(groupId);
         }
 
-        return {
-          ...invitation,
-          members: invitation.members.map(
-            (member) => {
-              if (member.id !== memberId) {
-                return member;
-              }
-
-              return {
-                ...member,
-                status,
-                responseDate:
-                  status === "pending"
-                    ? undefined
-                    : "Atualizado agora",
-                responseChannel:
-                  status === "pending"
-                    ? undefined
-                    : member.responseChannel ||
-                      "manual",
-              };
-            },
-          ),
-        };
-      }),
-    );
-
-    showFeedback(
-      "Confirmação atualizada com sucesso.",
+        return next;
+      },
     );
   }
 
-  function updateDietaryRestriction(
-    invitationId: number,
-    memberId: number,
-    value: string,
+  async function updateGuest(
+    groupId: string,
+    guestId: string,
+    confirmationStatus:
+      RsvpConfirmationStatus,
   ) {
-    setItems((currentItems) =>
-      currentItems.map((invitation) => {
-        if (invitation.id !== invitationId) {
-          return invitation;
-        }
-
-        return {
-          ...invitation,
-          members: invitation.members.map(
-            (member) =>
-              member.id === memberId
-                ? {
-                    ...member,
-                    dietaryRestriction: value,
-                  }
-                : member,
-          ),
-        };
-      }),
-    );
-  }
-
-  function sendReminder(
-    invitationId: number,
-  ) {
-    setItems((currentItems) =>
-      currentItems.map((invitation) =>
-        invitation.id === invitationId
-          ? {
-              ...invitation,
-              lastReminder: "Agora",
-            }
-          : invitation,
-      ),
-    );
-
-    showFeedback(
-      "Lembrete registrado para o contato principal.",
-    );
-  }
-
-  function sendAllReminders() {
     if (
-      invitationsWithPendingMembers.length === 0
+      updatingGuestId ||
+      updatingGroupId
     ) {
-      showFeedback(
-        "Não existem convites com respostas pendentes.",
-      );
-
       return;
     }
 
-    setItems((currentItems) =>
-      currentItems.map((invitation) => {
-        const hasPending =
-          invitation.members.some(
-            (member) =>
-              member.status === "pending",
-          );
+    setUpdatingGuestId(guestId);
 
-        return hasPending
-          ? {
-              ...invitation,
-              lastReminder: "Agora",
-            }
-          : invitation;
-      }),
-    );
+    try {
+      const result =
+        await updateGuestConfirmationAction({
+          guestId,
+          confirmationStatus,
+        });
 
-    showFeedback(
-      `Lembretes registrados para ${invitationsWithPendingMembers.length} convites.`,
-    );
+      if (!result.success) {
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      const respondedAt =
+        confirmationStatus ===
+        "pending"
+          ? undefined
+          : new Date().toISOString();
+
+      setGroups((current) =>
+        current.map((group) =>
+          group.id === groupId
+            ? {
+                ...group,
+                guests:
+                  group.guests.map(
+                    (guest) =>
+                      guest.id ===
+                      guestId
+                        ? {
+                            ...guest,
+                            confirmation:
+                              confirmationStatus,
+                            respondedAt,
+                          }
+                        : guest,
+                  ),
+              }
+            : group,
+        ),
+      );
+
+      showFeedback(result.message);
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao atualizar RSVP individual:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível atualizar o RSVP do convidado.",
+      );
+    } finally {
+      setUpdatingGuestId(null);
+    }
+  }
+
+  async function updateGroup(
+    groupId: string,
+    confirmationStatus:
+      RsvpConfirmationStatus,
+  ) {
+    if (
+      updatingGuestId ||
+      updatingGroupId
+    ) {
+      return;
+    }
+
+    setUpdatingGroupId(groupId);
+
+    try {
+      const result =
+        await updateInvitationGroupConfirmationAction({
+          invitationGroupId:
+            groupId,
+          confirmationStatus,
+        });
+
+      if (!result.success) {
+        showFeedback(
+          result.message,
+        );
+        return;
+      }
+
+      const respondedAt =
+        confirmationStatus ===
+        "pending"
+          ? undefined
+          : new Date().toISOString();
+
+      setGroups((current) =>
+        current.map((group) =>
+          group.id === groupId
+            ? {
+                ...group,
+                guests:
+                  group.guests.map(
+                    (guest) => ({
+                      ...guest,
+                      confirmation:
+                        confirmationStatus,
+                      respondedAt,
+                    }),
+                  ),
+              }
+            : group,
+        ),
+      );
+
+      showFeedback(result.message);
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Erro ao atualizar RSVP coletivo:",
+        error,
+      );
+
+      showFeedback(
+        "Não foi possível atualizar o RSVP do grupo.",
+      );
+    } finally {
+      setUpdatingGroupId(null);
+    }
   }
 
   return (
@@ -358,592 +492,663 @@ export default function RSVPManager({
         <div
           className={styles.feedback}
           role="status"
+          aria-live="polite"
         >
-          <span aria-hidden="true">✓</span>
+          <span aria-hidden="true">
+            ✓
+          </span>
+
           {feedback}
         </div>
       )}
 
-      <header className={styles.pageHeader}>
-        <div className={styles.headerContent}>
+      <header
+        className={styles.hero}
+      >
+        <div
+          className={styles.heroCopy}
+        >
           <span className="dashboard-eyebrow">
             Convidados
           </span>
 
-          <h1>Confirmações de presença</h1>
+          <h1>
+            Confirmações de presença
+          </h1>
 
           <p>
-            Acompanhe a resposta individual de cada
-            pessoa cadastrada nos convites.
+            Acompanhe as respostas para
+            {" "}
+            {brideName}
+            {" & "}
+            {groomName}
+            {" "}
+            e atualize convidados
+            individualmente ou por grupo.
           </p>
-
-          <div className={styles.invitationNotice}>
-            <span aria-hidden="true">i</span>
-
-            <p>
-              A confirmação está limitada às pessoas
-              previamente cadastradas em cada convite.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className={styles.remindAllButton}
-            onClick={sendAllReminders}
-          >
-            <span aria-hidden="true">↗</span>
-
-            Lembrar convites pendentes
-
-            {invitationsWithPendingMembers.length >
-              0 && (
-              <span
-                className={
-                  styles.remindAllCounter
-                }
-              >
-                {
-                  invitationsWithPendingMembers.length
-                }
-              </span>
-            )}
-          </button>
         </div>
 
-        <div className={styles.headerOverview}>
-          <div className={styles.responseProgress}>
-            <div
-              className={
-                styles.responseProgressCircle
-              }
-              style={{
-                background: `conic-gradient(
-                  var(--dashboard-accent, #92966f)
-                  ${responsePercentage}%,
-                  rgba(64, 77, 119, 0.08)
-                  ${responsePercentage}%
-                )`,
-              }}
-            >
-              <div>
-                <strong>
-                  {responsePercentage}%
-                </strong>
+        <div
+          className={styles.progressCard}
+        >
+          <div
+            className={styles.progressHeading}
+          >
+            <div>
+              <span>
+                Progresso do RSVP
+              </span>
 
-                <span>responderam</span>
-              </div>
+              <strong>
+                {responsePercentage}%
+              </strong>
             </div>
+
+            <small>
+              {totals.answered} de
+              {" "}
+              {totals.total}
+              {" "}
+              responderam
+            </small>
           </div>
 
-          <div className={styles.headerStatistics}>
-            <div>
-              <span
-                className={`${styles.statisticDot} ${styles.invitationDot}`}
-              />
-
-              <div>
-                <strong>{items.length}</strong>
-                <span>Convites</span>
-              </div>
-            </div>
-
-            <div>
-              <span
-                className={`${styles.statisticDot} ${styles.peopleDot}`}
-              />
-
-              <div>
-                <strong>{allMembers.length}</strong>
-                <span>Pessoas cadastradas</span>
-              </div>
-            </div>
-
-            <div>
-              <span
-                className={`${styles.statisticDot} ${styles.confirmedDot}`}
-              />
-
-              <div>
-                <strong>
-                  {confirmedMembers.length}
-                </strong>
-
-                <span>Confirmadas</span>
-              </div>
-            </div>
-
-            <div>
-              <span
-                className={`${styles.statisticDot} ${styles.pendingDot}`}
-              />
-
-              <div>
-                <strong>
-                  {pendingMembers.length}
-                </strong>
-
-                <span>Aguardando</span>
-              </div>
-            </div>
+          <div
+            className={styles.progressTrack}
+            role="progressbar"
+            aria-label="Progresso das confirmações"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={
+              responsePercentage
+            }
+          >
+            <span
+              style={{
+                width:
+                  `${responsePercentage}%`,
+              }}
+            />
           </div>
         </div>
       </header>
 
       <section
-        className={styles.toolbar}
-        aria-label="Filtros das confirmações"
+        className={styles.metrics}
+        aria-label="Resumo do RSVP"
       >
-        <label className={styles.search}>
-          <span aria-hidden="true">⌕</span>
+        <article>
+          <span>Total previsto</span>
+          <strong>{totals.total}</strong>
+          <small>
+            {groups.length}
+            {" "}
+            {groups.length === 1
+              ? "convite"
+              : "convites"}
+          </small>
+        </article>
+
+        <article>
+          <span>Confirmados</span>
+          <strong>
+            {totals.confirmed}
+          </strong>
+          <small>
+            Presença confirmada
+          </small>
+        </article>
+
+        <article>
+          <span>Aguardando</span>
+          <strong>
+            {totals.pending}
+          </strong>
+          <small>
+            Ainda sem resposta
+          </small>
+        </article>
+
+        <article>
+          <span>Recusaram</span>
+          <strong>
+            {totals.declined}
+          </strong>
+          <small>
+            Não comparecerão
+          </small>
+        </article>
+      </section>
+
+      <section
+        className={styles.toolbar}
+        aria-label="Filtros do RSVP"
+      >
+        <label
+          className={styles.search}
+        >
+          <span aria-hidden="true">
+            ⌕
+          </span>
 
           <input
             type="search"
             value={search}
-            placeholder="Buscar pessoa ou convite..."
+            placeholder="Buscar grupo, convidado ou código..."
             onChange={(event) =>
-              setSearch(event.target.value)
+              setSearch(
+                event.target.value,
+              )
             }
           />
         </label>
 
-        <div className={styles.filters}>
-          <button
-            type="button"
-            className={`${styles.filterButton} ${
-              filter === "all"
-                ? styles.filterButtonActive
-                : ""
-            }`}
-            onClick={() => setFilter("all")}
-          >
-            Todos
-            <span>{items.length}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.filterButton} ${
-              filter === "pending"
-                ? styles.filterButtonActive
-                : ""
-            }`}
-            onClick={() => setFilter("pending")}
-          >
-            Com pendências
-            <span>
-              {
-                invitationsWithPendingMembers.length
-              }
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.filterButton} ${
-              filter === "answered"
-                ? styles.filterButtonActive
-                : ""
-            }`}
-            onClick={() =>
-              setFilter("answered")
-            }
-          >
-            Respondidos
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.filterButton} ${
-              filter === "confirmed"
-                ? styles.filterButtonActive
-                : ""
-            }`}
-            onClick={() =>
-              setFilter("confirmed")
-            }
-          >
-            Com confirmados
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.filterButton} ${
-              filter === "declined"
-                ? styles.filterButtonActive
-                : ""
-            }`}
-            onClick={() =>
-              setFilter("declined")
-            }
-          >
-            Com recusas
-          </button>
+        <div
+          className={styles.filters}
+        >
+          {(
+            [
+              ["all", "Todos"],
+              [
+                "confirmed",
+                "Confirmados",
+              ],
+              [
+                "pending",
+                "Aguardando",
+              ],
+              [
+                "declined",
+                "Recusaram",
+              ],
+              [
+                "mixed",
+                "Respostas mistas",
+              ],
+            ] as const
+          ).map(
+            ([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={
+                  statusFilter ===
+                  value
+                    ? styles.filterActive
+                    : ""
+                }
+                onClick={() =>
+                  setStatusFilter(
+                    value,
+                  )
+                }
+              >
+                {label}
+              </button>
+            ),
+          )}
         </div>
       </section>
 
-      <section className={styles.invitationList}>
-        <header className={styles.listHeader}>
+      <section
+        className={styles.groupsSection}
+      >
+        <header
+          className={styles.sectionHeader}
+        >
           <div>
             <span className="dashboard-eyebrow">
               Convites
             </span>
 
             <h2>
-              {filteredInvitations.length}{" "}
-              {filteredInvitations.length === 1
-                ? "convite encontrado"
-                : "convites encontrados"}
+              {filteredGroups.length}
+              {" "}
+              {filteredGroups.length ===
+              1
+                ? "grupo encontrado"
+                : "grupos encontrados"}
             </h2>
           </div>
 
-          <div className={styles.listLegend}>
-            <span>
-              <i className={styles.confirmedDot} />
-              Confirmado
-            </span>
-
-            <span>
-              <i className={styles.pendingDot} />
-              Aguardando
-            </span>
-
-            <span>
-              <i className={styles.declinedDot} />
-              Recusou
-            </span>
-          </div>
+          <p>
+            Cada grupo compartilha o
+            mesmo código de acesso,
+            mas cada pessoa mantém uma
+            resposta individual.
+          </p>
         </header>
 
-        {filteredInvitations.length > 0 ? (
-          <div className={styles.invitationGroups}>
-            {filteredInvitations.map(
-              (invitation) => {
-                const confirmedCount =
-                  invitation.members.filter(
-                    (member) =>
-                      member.status ===
+        {filteredGroups.length > 0 ? (
+          <div
+            className={styles.groupList}
+          >
+            {filteredGroups.map(
+              (group) => {
+                const groupConfirmation =
+                  getGroupConfirmation(
+                    group.guests,
+                  );
+
+                const isExpanded =
+                  expandedGroupIds.has(
+                    group.id,
+                  );
+
+                const latestResponse =
+                  getLatestResponse(
+                    group.guests,
+                  );
+
+                const confirmed =
+                  group.guests.filter(
+                    (guest) =>
+                      guest.confirmation ===
                       "confirmed",
                   ).length;
 
-                const pendingCount =
-                  invitation.members.filter(
-                    (member) =>
-                      member.status === "pending",
+                const pending =
+                  group.guests.filter(
+                    (guest) =>
+                      guest.confirmation ===
+                      "pending",
                   ).length;
 
-                const declinedCount =
-                  invitation.members.filter(
-                    (member) =>
-                      member.status ===
+                const declined =
+                  group.guests.filter(
+                    (guest) =>
+                      guest.confirmation ===
                       "declined",
                   ).length;
 
+                const isUpdating =
+                  updatingGroupId ===
+                  group.id;
+
                 return (
                   <article
-                    key={invitation.id}
+                    key={group.id}
                     className={
-                      styles.invitationCard
+                      styles.groupCard
                     }
                   >
                     <header
                       className={
-                        styles.invitationHeader
+                        styles.groupHeader
                       }
                     >
-                      <div
+                      <button
+                        type="button"
                         className={
-                          styles.invitationIdentity
+                          styles.groupToggle
+                        }
+                        aria-expanded={
+                          isExpanded
+                        }
+                        onClick={() =>
+                          toggleGroup(
+                            group.id,
+                          )
                         }
                       >
                         <span
                           className={
-                            styles.invitationIcon
+                            styles.groupMonogram
                           }
                           aria-hidden="true"
                         >
-                          ✉
+                          {getInitials(
+                            group.name,
+                          )}
                         </span>
 
-                        <div>
-                          <span
-                            className={
-                              styles.invitationLabel
-                            }
-                          >
-                            Convite
-                          </span>
+                        <span
+                          className={
+                            styles.groupIdentity
+                          }
+                        >
+                          <strong>
+                            {group.name}
+                          </strong>
 
-                          <h3>
-                            {invitation.groupName}
-                          </h3>
-
-                          <p>
-                            Contato principal:{" "}
-                            <strong>
+                          <small>
+                            Código:
+                            {" "}
+                            <code>
                               {
-                                invitation.contactName
+                                group.invitationCode
                               }
-                            </strong>
+                            </code>
+                          </small>
+                        </span>
 
-                            {invitation.phone &&
-                              ` · ${invitation.phone}`}
-                          </p>
-                        </div>
-                      </div>
+                        <span
+                          className={`${styles.groupStatus} ${
+                            styles[
+                              `status-${groupConfirmation}`
+                            ]
+                          }`}
+                        >
+                          {
+                            groupConfirmationLabels[
+                              groupConfirmation
+                            ]
+                          }
+                        </span>
+
+                        <span
+                          className={
+                            styles.expandIcon
+                          }
+                          aria-hidden="true"
+                        >
+                          {isExpanded
+                            ? "−"
+                            : "+"}
+                        </span>
+                      </button>
 
                       <div
                         className={
-                          styles.invitationSummary
+                          styles.groupSummary
                         }
                       >
                         <span>
                           <strong>
-                            {confirmedCount}
+                            {group.guests.length}
                           </strong>
+                          {" "}
+                          pessoas
+                        </span>
+
+                        <span>
+                          <strong>
+                            {confirmed}
+                          </strong>
+                          {" "}
                           confirmados
                         </span>
 
                         <span>
                           <strong>
-                            {pendingCount}
+                            {pending}
                           </strong>
-                          pendentes
+                          {" "}
+                          aguardando
                         </span>
 
                         <span>
                           <strong>
-                            {declinedCount}
+                            {declined}
                           </strong>
-                          recusas
+                          {" "}
+                          recusaram
+                        </span>
+
+                        <span>
+                          Última resposta:
+                          {" "}
+                          <strong>
+                            {formatResponseDate(
+                              latestResponse,
+                            )}
+                          </strong>
                         </span>
                       </div>
-
-                      {pendingCount > 0 ? (
-                        <button
-                          type="button"
-                          className={
-                            styles.reminderButton
-                          }
-                          onClick={() =>
-                            sendReminder(
-                              invitation.id,
-                            )
-                          }
-                        >
-                          Enviar lembrete
-                        </button>
-                      ) : (
-                        <span
-                          className={
-                            styles.completedInvitation
-                          }
-                        >
-                          <i />
-                          Convite respondido
-                        </span>
-                      )}
                     </header>
 
-                    <div
-                      className={
-                        styles.memberList
-                      }
-                    >
-                      {invitation.members.map(
-                        (member) => (
-                          <article
-                            key={member.id}
-                            className={
-                              styles.memberRow
+                    {isExpanded && (
+                      <div
+                        className={
+                          styles.groupContent
+                        }
+                      >
+                        <div
+                          className={
+                            styles.groupActions
+                          }
+                        >
+                          <span>
+                            Atualizar todo o
+                            grupo:
+                          </span>
+
+                          <button
+                            type="button"
+                            disabled={
+                              isUpdating ||
+                              Boolean(
+                                updatingGuestId,
+                              ) ||
+                              group.guests
+                                .length === 0
+                            }
+                            onClick={() =>
+                              updateGroup(
+                                group.id,
+                                "confirmed",
+                              )
                             }
                           >
-                            <div
-                              className={
-                                styles.memberIdentity
-                              }
-                            >
-                              <span
-                                className={
-                                  styles.avatar
-                                }
-                                aria-hidden="true"
-                              >
-                                {getInitials(
-                                  member.name,
-                                )}
-                              </span>
+                            {isUpdating
+                              ? "Atualizando..."
+                              : "Confirmar todos"}
+                          </button>
 
-                              <div>
-                                <strong>
-                                  {member.name}
-                                </strong>
+                          <button
+                            type="button"
+                            disabled={
+                              isUpdating ||
+                              Boolean(
+                                updatingGuestId,
+                              ) ||
+                              group.guests
+                                .length === 0
+                            }
+                            onClick={() =>
+                              updateGroup(
+                                group.id,
+                                "pending",
+                              )
+                            }
+                          >
+                            Aguardar todos
+                          </button>
 
-                                <span>
-                                  {getRelationshipLabel(
-                                    member,
-                                  )}
-                                </span>
-                              </div>
-                            </div>
+                          <button
+                            type="button"
+                            className={
+                              styles.declineButton
+                            }
+                            disabled={
+                              isUpdating ||
+                              Boolean(
+                                updatingGuestId,
+                              ) ||
+                              group.guests
+                                .length === 0
+                            }
+                            onClick={() =>
+                              updateGroup(
+                                group.id,
+                                "declined",
+                              )
+                            }
+                          >
+                            Marcar ausentes
+                          </button>
+                        </div>
 
-                            <div
-                              className={
-                                styles.memberStatus
-                              }
-                            >
-                              <label
-                                htmlFor={`status-${invitation.id}-${member.id}`}
-                              >
-                                Confirmação
-                              </label>
-
-                              <select
-                                id={`status-${invitation.id}-${member.id}`}
-                                value={
-                                  member.status
-                                }
-                                className={`${styles.statusSelect} ${
-                                  statusClassNames[
-                                    member.status
-                                  ]
-                                }`}
-                                onChange={(
-                                  event,
-                                ) =>
-                                  updateMemberStatus(
-                                    invitation.id,
-                                    member.id,
-                                    event.target
-                                      .value as RSVPStatus,
-                                  )
-                                }
-                              >
-                                <option value="confirmed">
-                                  Confirmado
-                                </option>
-
-                                <option value="pending">
-                                  Aguardando
-                                </option>
-
-                                <option value="declined">
-                                  Não comparecerá
-                                </option>
-                              </select>
-                            </div>
-
-                            <div
-                              className={
-                                styles.memberResponse
-                              }
-                            >
-                              <span>Resposta</span>
-
-                              <strong>
-                                {member.responseDate ||
-                                  "Ainda não respondeu"}
-                              </strong>
-
-                              {member.responseChannel && (
-                                <small>
-                                  Via{" "}
-                                  {
-                                    channelLabels[
-                                      member
-                                        .responseChannel
-                                    ]
+                        {group.guests.length >
+                        0 ? (
+                          <div
+                            className={
+                              styles.guestList
+                            }
+                          >
+                            {group.guests.map(
+                              (guest) => (
+                                <div
+                                  key={
+                                    guest.id
                                   }
-                                </small>
-                              )}
-                            </div>
+                                  className={
+                                    styles.guestRow
+                                  }
+                                >
+                                  <div
+                                    className={
+                                      styles.guestIdentity
+                                    }
+                                  >
+                                    <span
+                                      className={
+                                        styles.avatar
+                                      }
+                                      aria-hidden="true"
+                                    >
+                                      {getInitials(
+                                        guest.name,
+                                      )}
+                                    </span>
 
-                            <label
-                              className={
-                                styles.restrictionField
-                              }
-                            >
-                              <span>
-                                Restrição alimentar
-                              </span>
+                                    <div>
+                                      <strong>
+                                        {
+                                          guest.name
+                                        }
+                                      </strong>
 
-                              <input
-                                type="text"
-                                value={
-                                  member.dietaryRestriction ||
-                                  ""
-                                }
-                                placeholder="Nenhuma informada"
-                                onChange={(
-                                  event,
-                                ) =>
-                                  updateDietaryRestriction(
-                                    invitation.id,
-                                    member.id,
-                                    event.target
-                                      .value,
-                                  )
-                                }
-                              />
-                            </label>
+                                      <span>
+                                        {guest.isPrimary
+                                          ? "Titular do convite"
+                                          : guest.relationshipLabel ||
+                                            (guest.isChild
+                                              ? "Criança"
+                                              : "Convidado do grupo")}
+                                      </span>
+                                    </div>
+                                  </div>
 
-                            <button
-                              type="button"
-                              className={
-                                styles.moreButton
-                              }
-                              aria-label={`Mais opções para ${member.name}`}
-                            >
-                              <span aria-hidden="true">
-                                •••
-                              </span>
-                            </button>
-                          </article>
-                        ),
-                      )}
-                    </div>
+                                  <div
+                                    className={
+                                      styles.guestContact
+                                    }
+                                  >
+                                    <span>
+                                      {guest.phone ||
+                                        "Sem telefone"}
+                                    </span>
 
-                    <footer
-                      className={
-                        styles.invitationFooter
-                      }
-                    >
-                      <span>
-                        {invitation.members.length}{" "}
-                        {invitation.members.length ===
-                        1
-                          ? "pessoa cadastrada"
-                          : "pessoas cadastradas"}
-                      </span>
+                                    {guest.email && (
+                                      <span>
+                                        {
+                                          guest.email
+                                        }
+                                      </span>
+                                    )}
+                                  </div>
 
-                      <span>
-                        {invitation.lastReminder
-                          ? `Último lembrete: ${invitation.lastReminder}`
-                          : "Nenhum lembrete enviado"}
-                      </span>
-                    </footer>
+                                  <span
+                                    className={`${styles.guestStatus} ${
+                                      styles[
+                                        `guest-${guest.confirmation}`
+                                      ]
+                                    }`}
+                                  >
+                                    {
+                                      confirmationLabels[
+                                        guest.confirmation
+                                      ]
+                                    }
+                                  </span>
+
+                                  <span
+                                    className={
+                                      styles.responseDate
+                                    }
+                                  >
+                                    {formatResponseDate(
+                                      guest.respondedAt,
+                                    )}
+                                  </span>
+
+                                  <select
+                                    value={
+                                      guest.confirmation
+                                    }
+                                    aria-label={`Alterar confirmação de ${guest.name}`}
+                                    disabled={
+                                      updatingGuestId ===
+                                        guest.id ||
+                                      Boolean(
+                                        updatingGroupId,
+                                      )
+                                    }
+                                    onChange={(
+                                      event,
+                                    ) =>
+                                      updateGuest(
+                                        group.id,
+                                        guest.id,
+                                        event
+                                          .target
+                                          .value as RsvpConfirmationStatus,
+                                      )
+                                    }
+                                  >
+                                    <option value="pending">
+                                      Aguardando
+                                    </option>
+
+                                    <option value="confirmed">
+                                      Confirmado
+                                    </option>
+
+                                    <option value="declined">
+                                      Não comparecerá
+                                    </option>
+                                  </select>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            className={
+                              styles.emptyGroup
+                            }
+                          >
+                            Este grupo ainda
+                            não possui
+                            convidados.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </article>
                 );
               },
             )}
           </div>
         ) : (
-          <div className={styles.emptyState}>
-            <span aria-hidden="true">⌕</span>
-
+          <div
+            className={styles.emptyState}
+          >
             <strong>
-              Nenhum convite encontrado
+              Nenhum grupo encontrado
             </strong>
 
             <p>
-              Altere a busca ou os filtros
-              selecionados.
+              Altere a busca ou os
+              filtros selecionados.
             </p>
 
             <button
               type="button"
               onClick={() => {
                 setSearch("");
-                setFilter("all");
+                setStatusFilter("all");
               }}
             >
               Limpar filtros
