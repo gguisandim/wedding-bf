@@ -73,17 +73,17 @@ export default function MetricsGrid({
         <MetricCard
           label="Confirmações"
           value={`${Math.round(confirmationPercentage)}%`}
-          description="das respostas recebidas"
+          description="da lista confirmou presença"
           detail={`${pendingGuests} aguardando resposta`}
           progress={confirmationPercentage}
           tone="green"
         />
 
         <MetricCard
-          label="Valor pago"
+          label="Financeiro"
           value={formatCurrency(paidAmount)}
-          description={`de ${formatCurrency(totalBudget)}`}
-          detail={`${Math.round(budgetPercentage)}% do orçamento pago`}
+          description={`${formatCurrency(paidAmount)} pagos de ${formatCurrency(totalBudget)}`}
+          detail={`${Math.round(budgetPercentage)}% do valor total pago`}
           progress={budgetPercentage}
           tone="yellow"
         />

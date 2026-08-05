@@ -3,52 +3,66 @@ import Link from "next/link";
 type FinancialSummaryProps = {
   totalBudget: number;
   paidAmount: number;
-  committedAmount: number;
+  remainingAmount: number;
+  dueNext30: number;
+  overdueAmount: number;
+  unscheduledAmount: number;
 };
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
+function formatCurrency(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "pt-BR",
+    {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0,
+    },
+  ).format(value);
 }
 
-function calculatePercentage(value: number, total: number) {
+function calculatePercentage(
+  value: number,
+  total: number,
+) {
   if (total <= 0) {
     return 0;
   }
 
   return Math.min(
     100,
-    Math.max(0, Math.round((value / total) * 100)),
+    Math.max(
+      0,
+      Math.round(
+        (
+          value /
+          total
+        ) * 100,
+      ),
+    ),
   );
 }
 
 export default function FinancialSummary({
   totalBudget,
   paidAmount,
-  committedAmount,
+  remainingAmount,
+  dueNext30,
+  overdueAmount,
+  unscheduledAmount,
 }: FinancialSummaryProps) {
-  const availableAmount = Math.max(
-    totalBudget - paidAmount - committedAmount,
-    0,
-  );
+  const paidPercentage =
+    calculatePercentage(
+      paidAmount,
+      totalBudget,
+    );
 
-  const paidPercentage = calculatePercentage(
-    paidAmount,
-    totalBudget,
-  );
-
-  const committedPercentage = calculatePercentage(
-    committedAmount,
-    totalBudget,
-  );
-
-  const usedPercentage = calculatePercentage(
-    paidAmount + committedAmount,
-    totalBudget,
-  );
+  const remainingPercentage =
+    calculatePercentage(
+      remainingAmount,
+      totalBudget,
+    );
 
   return (
     <article
@@ -74,42 +88,54 @@ export default function FinancialSummary({
           className="summary-card-link"
         >
           Ver orçamento
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true">
+            →
+          </span>
         </Link>
       </header>
 
       <div className="financial-summary-main">
         <span className="financial-summary-label">
-          Orçamento comprometido
+          Progresso dos pagamentos
         </span>
 
         <div className="financial-summary-value-row">
-          <strong>{usedPercentage}%</strong>
+          <strong>
+            {paidPercentage}%
+          </strong>
 
           <span>
-            de {formatCurrency(totalBudget)}
+            de
+            {" "}
+            {formatCurrency(
+              totalBudget,
+            )}
           </span>
         </div>
 
         <div
           className="financial-summary-progress"
           role="progressbar"
-          aria-label="Percentual do orçamento comprometido"
+          aria-label="Percentual do valor total já pago"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={usedPercentage}
+          aria-valuenow={
+            paidPercentage
+          }
         >
           <span
             className="financial-progress-paid"
             style={{
-              width: `${paidPercentage}%`,
+              width:
+                `${paidPercentage}%`,
             }}
           />
 
           <span
             className="financial-progress-committed"
             style={{
-              width: `${committedPercentage}%`,
+              width:
+                `${remainingPercentage}%`,
             }}
           />
         </div>
@@ -136,11 +162,17 @@ export default function FinancialSummary({
 
             <div>
               <strong>Pago</strong>
-              <span>Valores já quitados</span>
+              <span>
+                Valores já registrados
+              </span>
             </div>
           </div>
 
-          <strong>{formatCurrency(paidAmount)}</strong>
+          <strong>
+            {formatCurrency(
+              paidAmount,
+            )}
+          </strong>
         </div>
 
         <div className="financial-summary-row">
@@ -151,36 +183,59 @@ export default function FinancialSummary({
 
             <div>
               <strong>A pagar</strong>
-              <span>Valores já comprometidos</span>
+              <span>
+                Saldo total dos serviços
+              </span>
             </div>
           </div>
 
-          <strong>{formatCurrency(committedAmount)}</strong>
+          <strong>
+            {formatCurrency(
+              remainingAmount,
+            )}
+          </strong>
         </div>
 
         <div className="financial-summary-row">
           <div>
             <span className="financial-status-icon financial-status-available">
-              +
+              →
             </span>
 
             <div>
-              <strong>Disponível</strong>
-              <span>Saldo restante do orçamento</span>
+              <strong>
+                Próximos 30 dias
+              </strong>
+              <span>
+                Contas com vencimento próximo
+              </span>
             </div>
           </div>
 
-          <strong>{formatCurrency(availableAmount)}</strong>
+          <strong>
+            {formatCurrency(
+              dueNext30,
+            )}
+          </strong>
         </div>
       </div>
 
       <footer className="financial-summary-footer">
         <span>
-          {formatCurrency(paidAmount + committedAmount)} comprometidos
+          {overdueAmount > 0
+            ? `${formatCurrency(
+                overdueAmount,
+              )} em atraso`
+            : "Nenhuma conta atrasada"}
+          {unscheduledAmount > 0
+            ? ` · ${formatCurrency(
+                unscheduledAmount,
+              )} sem data definida`
+            : ""}
         </span>
 
         <Link href="/painel/financeiro">
-          Gerenciar despesas
+          Gerenciar contas
         </Link>
       </footer>
     </article>

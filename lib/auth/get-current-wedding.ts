@@ -17,6 +17,7 @@ export type CurrentWedding = {
 
   brideName: string;
   groomName: string;
+  memberName: string;
 
   weddingDate: string;
   weddingTime: string | null;
@@ -30,6 +31,105 @@ export type CurrentWedding = {
   role: WeddingRole;
   memberType: WeddingMemberType;
 };
+
+function getMetadataName(
+  metadata: Record<string, unknown> | undefined,
+): string | null {
+  if (!metadata) {
+    return null;
+  }
+
+  const possibleNames = [
+    metadata.full_name,
+    metadata.display_name,
+    metadata.preferred_name,
+    metadata.name,
+  ];
+
+  for (const possibleName of possibleNames) {
+    if (
+      typeof possibleName === "string" &&
+      possibleName.trim().length > 0
+    ) {
+      return possibleName.trim();
+    }
+  }
+
+  return null;
+}
+
+function formatEmailName(
+  email: string | undefined,
+): string | null {
+  const emailPrefix = email
+    ?.split("@")[0]
+    ?.trim();
+
+  if (!emailPrefix) {
+    return null;
+  }
+
+  const normalized = emailPrefix
+    .replace(/[._-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .split(" ")
+    .map((part) =>
+      part
+        ? `${part.charAt(0).toUpperCase()}${part.slice(1)}`
+        : "",
+    )
+    .join(" ");
+}
+
+function resolveMemberName({
+  memberType,
+  brideName,
+  groomName,
+  metadataName,
+  emailName,
+}: {
+  memberType: WeddingMemberType;
+  brideName: string;
+  groomName: string;
+  metadataName: string | null;
+  emailName: string | null;
+}): string {
+  if (memberType === "bride") {
+    return brideName;
+  }
+
+  if (memberType === "groom") {
+    return groomName;
+  }
+
+  if (metadataName) {
+    return metadataName;
+  }
+
+  if (emailName) {
+    return emailName;
+  }
+
+  const fallbackLabels: Record<
+    WeddingMemberType,
+    string
+  > = {
+    bride: brideName,
+    groom: groomName,
+    planner: "Cerimonialista",
+    developer: "Desenvolvedor",
+    other: "Usuário",
+  };
+
+  return fallbackLabels[memberType];
+}
 
 export const getCurrentWedding = cache(
   async (): Promise<CurrentWedding | null> => {
@@ -85,11 +185,31 @@ export const getCurrentWedding = cache(
       return null;
     }
 
+    const { data: userData } =
+      await supabase.auth.getUser();
+
+    const metadataName = getMetadataName(
+      userData.user?.user_metadata,
+    );
+
+    const emailName = formatEmailName(
+      userData.user?.email,
+    );
+
+    const memberName = resolveMemberName({
+      memberType: data.member_type,
+      brideName: wedding.bride_name,
+      groomName: wedding.groom_name,
+      metadataName,
+      emailName,
+    });
+
     return {
       id: wedding.id,
 
       brideName: wedding.bride_name,
       groomName: wedding.groom_name,
+      memberName,
 
       weddingDate: wedding.wedding_date,
       weddingTime: wedding.wedding_time,

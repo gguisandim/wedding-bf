@@ -3,7 +3,7 @@ import Link from "next/link";
 export type NextStepPriority = "urgent" | "soon" | "normal";
 
 export type NextStepItem = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   deadline: string;

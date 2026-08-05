@@ -1,5 +1,6 @@
 type WeddingHeaderProps = {
   coupleName: string;
+  memberName: string;
   weddingDate: string;
   daysRemaining: number;
   confirmedGuests: number;
@@ -8,6 +9,7 @@ type WeddingHeaderProps = {
 
 export default function WeddingHeader({
   coupleName,
+  memberName,
   weddingDate,
   daysRemaining,
   confirmedGuests,
@@ -21,7 +23,7 @@ export default function WeddingHeader({
         </span>
 
         <h1 className="wedding-header-title">
-          Nosso casamento
+          Bem-vindo, {memberName}
         </h1>
 
         <p className="wedding-header-date">

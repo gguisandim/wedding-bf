@@ -228,9 +228,27 @@ export default function CeremonyManager({
   const [mounted, setMounted] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [expandedBlockIds, setExpandedBlockIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   useEffect(() => setMounted(true), []);
-  useEffect(() => setBlocks(initialBlocks), [initialBlocks]);
+
+  useEffect(() => {
+    setBlocks(initialBlocks);
+
+    const availableIds = new Set(
+      initialBlocks.map((block) => block.id),
+    );
+
+    setExpandedBlockIds((current) => {
+      const next = new Set(
+        [...current].filter((id) => availableIds.has(id)),
+      );
+
+      return next;
+    });
+  }, [initialBlocks]);
 
   const totalDuration = useMemo(
     () => blocks.reduce((total, block) => total + block.durationMinutes, 0),
@@ -254,6 +272,20 @@ export default function CeremonyManager({
   function showFeedback(message: string) {
     setFeedback(message);
     window.setTimeout(() => setFeedback(null), 3200);
+  }
+
+  function toggleBlockDetails(blockId: string) {
+    setExpandedBlockIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(blockId)) {
+        next.delete(blockId);
+      } else {
+        next.add(blockId);
+      }
+
+      return next;
+    });
   }
 
   function nextTime() {
@@ -828,6 +860,7 @@ export default function CeremonyManager({
           <div className={styles.timeline}>
             {blocks.map((block, index) => {
               const progress = progressOf(block.checklist);
+              const isExpanded = expandedBlockIds.has(block.id);
 
               return (
                 <article
@@ -864,116 +897,273 @@ export default function CeremonyManager({
                   </div>
 
                   <div className={styles.blockContent}>
-                    <header className={styles.blockHeader}>
+                    <button
+                      type="button"
+                      className={styles.blockToggle}
+                      aria-expanded={isExpanded}
+                      aria-controls={`ceremony-details-${block.id}`}
+                      onClick={() => toggleBlockDetails(block.id)}
+                    >
                       <div className={styles.blockTime}>
                         <strong>{block.time}</strong>
                         <span>{formatDuration(block.durationMinutes)}</span>
                       </div>
-                      <span className={styles.typeBadge}>
-                        <i>{typeSymbols[block.type]}</i>{typeLabels[block.type]}
-                      </span>
-                      <span className={`${styles.statusBadge} ${styles[`status-${block.status}`]}`}>
-                        <i />{statusLabels[block.status]}
-                      </span>
-                    </header>
 
-                    <div className={styles.blockMain}>
-                      <div className={styles.blockDescription}>
+                      <div className={styles.compactIdentity}>
+                        <div className={styles.compactTags}>
+                          <span className={styles.typeBadge}>
+                            <i>{typeSymbols[block.type]}</i>
+                            {typeLabels[block.type]}
+                          </span>
+
+                          <span
+                            className={`${styles.statusBadge} ${
+                              styles[`status-${block.status}`]
+                            }`}
+                          >
+                            <i />
+                            {statusLabels[block.status]}
+                          </span>
+                        </div>
+
                         <h3>{block.title}</h3>
-                        <p>{block.description || "Nenhuma descrição informada."}</p>
-                      </div>
 
-                      <div className={styles.assignmentGrid}>
-                        <div><span>Responsável</span><strong>{block.responsible || "Não definido"}</strong></div>
-                        <div><span>Participantes</span><strong>{block.participants || "Não informado"}</strong></div>
-                      </div>
-
-                      {block.instructions && (
-                        <div className={styles.instructions}>
-                          <span>i</span>
-                          <div><strong>Orientações</strong><p>{block.instructions}</p></div>
-                        </div>
-                      )}
-
-                      <section className={styles.checklistSection}>
-                        <header className={styles.checklistHeader}>
-                          <div><span>Preparação</span><strong>Checklist deste momento</strong></div>
-                          <b>{progress.percentage}%</b>
-                        </header>
-                        <div className={styles.progressTrack}>
-                          <span style={{ width: `${progress.percentage}%` }} />
-                        </div>
-
-                        {block.checklist.length ? (
-                          <div className={styles.checklistItems}>
-                            {block.checklist.map((item) => (
-                              <article
-                                key={item.id}
-                                className={`${styles.checklistItem} ${
-                                  item.status === "completed" ? styles.checklistItemCompleted : ""
-                                }`}
-                              >
-                                <button
-                                  type="button"
-                                  className={styles.checklistToggle}
-                                  aria-pressed={item.status === "completed"}
-                                  onClick={() => toggleTask(item.id)}
-                                >
-                                  {item.status === "completed" ? "✓" : ""}
-                                </button>
-                                <div className={styles.checklistIdentity}>
-                                  <strong>{item.title}</strong>
-                                  <span>
-                                    {responsibleLabel(item, brideName, groomName)}
-                                    {item.dueDate ? ` · ${formatDate(item.dueDate)}` : ""}
-                                  </span>
-                                </div>
-                                <span className={`${styles.priorityBadge} ${styles[`priority-${item.priority}`]}`}>
-                                  {priorityLabels[item.priority]}
-                                </span>
-                                <button type="button" onClick={() => openEditTask(item)}>Editar</button>
-                                <button type="button" onClick={() => removeTask(item.id)}>×</button>
-                              </article>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className={styles.emptyChecklist}>Nenhuma tarefa neste momento.</p>
-                        )}
-
-                        <div className={styles.checklistComposer}>
-                          <input
-                            value={drafts[block.id] ?? ""}
-                            placeholder="Adicionar tarefa..."
-                            onChange={(event) =>
-                              setDrafts((current) => ({
-                                ...current,
-                                [block.id]: event.target.value,
-                              }))
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                addTask(block.id);
-                              }
-                            }}
-                          />
-                          <button type="button" onClick={() => addTask(block.id)}>Adicionar</button>
-                        </div>
-                        <p className={styles.sourceNote}>
-                          Estas tarefas também aparecem na etapa “Cerimônia” do checklist geral.
+                        <p>
+                          {block.description ||
+                            "Nenhuma descrição informada."}
                         </p>
-                      </section>
-                    </div>
-
-                    <footer className={styles.blockActions}>
-                      <div>
-                        <button type="button" disabled={index === 0} onClick={() => moveDirection(block.id, -1)}>↑</button>
-                        <button type="button" disabled={index === blocks.length - 1} onClick={() => moveDirection(block.id, 1)}>↓</button>
                       </div>
-                      <button type="button" onClick={() => duplicateBlock(block.id)}>Duplicar</button>
-                      <button type="button" onClick={() => openEditBlock(block)}>Editar</button>
-                      <button type="button" className={styles.deleteButton} onClick={() => removeBlock(block)}>Excluir</button>
-                    </footer>
+
+                      <div className={styles.compactMeta}>
+                        <span>
+                          <small>Responsável</small>
+                          <strong>
+                            {block.responsible || "Não definido"}
+                          </strong>
+                        </span>
+
+                        <span>
+                          <small>Checklist</small>
+                          <strong>
+                            {progress.completed}/{block.checklist.length}
+                          </strong>
+                        </span>
+                      </div>
+
+                      <span
+                        className={`${styles.expandButton} ${
+                          isExpanded ? styles.expandButtonOpen : ""
+                        }`}
+                        aria-hidden="true"
+                      >
+                        ⌄
+                      </span>
+                    </button>
+
+                    {isExpanded && (
+                      <div
+                        id={`ceremony-details-${block.id}`}
+                        className={styles.blockDetails}
+                      >
+                        <div className={styles.blockMain}>
+                          <div className={styles.detailsIntro}>
+                            <span>Detalhes do momento</span>
+
+                            <p>
+                              {block.description ||
+                                "Nenhuma descrição informada."}
+                            </p>
+                          </div>
+
+                          <div className={styles.assignmentGrid}>
+                            <div>
+                              <span>Responsável</span>
+                              <strong>
+                                {block.responsible || "Não definido"}
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Participantes</span>
+                              <strong>
+                                {block.participants || "Não informado"}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {block.instructions && (
+                            <div className={styles.instructions}>
+                              <span>i</span>
+
+                              <div>
+                                <strong>Orientações</strong>
+                                <p>{block.instructions}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <section className={styles.checklistSection}>
+                            <header className={styles.checklistHeader}>
+                              <div>
+                                <span>Preparação</span>
+                                <strong>Checklist deste momento</strong>
+                              </div>
+
+                              <b>{progress.percentage}%</b>
+                            </header>
+
+                            <div className={styles.progressTrack}>
+                              <span
+                                style={{
+                                  width: `${progress.percentage}%`,
+                                }}
+                              />
+                            </div>
+
+                            {block.checklist.length ? (
+                              <div className={styles.checklistItems}>
+                                {block.checklist.map((item) => (
+                                  <article
+                                    key={item.id}
+                                    className={`${styles.checklistItem} ${
+                                      item.status === "completed"
+                                        ? styles.checklistItemCompleted
+                                        : ""
+                                    }`}
+                                  >
+                                    <button
+                                      type="button"
+                                      className={styles.checklistToggle}
+                                      aria-pressed={
+                                        item.status === "completed"
+                                      }
+                                      onClick={() => toggleTask(item.id)}
+                                    >
+                                      {item.status === "completed" ? "✓" : ""}
+                                    </button>
+
+                                    <div className={styles.checklistIdentity}>
+                                      <strong>{item.title}</strong>
+
+                                      <span>
+                                        {responsibleLabel(
+                                          item,
+                                          brideName,
+                                          groomName,
+                                        )}
+                                        {item.dueDate
+                                          ? ` · ${formatDate(item.dueDate)}`
+                                          : ""}
+                                      </span>
+                                    </div>
+
+                                    <span
+                                      className={`${styles.priorityBadge} ${
+                                        styles[`priority-${item.priority}`]
+                                      }`}
+                                    >
+                                      {priorityLabels[item.priority]}
+                                    </span>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditTask(item)}
+                                    >
+                                      Editar
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      aria-label="Excluir tarefa"
+                                      onClick={() => removeTask(item.id)}
+                                    >
+                                      ×
+                                    </button>
+                                  </article>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className={styles.emptyChecklist}>
+                                Nenhuma tarefa neste momento.
+                              </p>
+                            )}
+
+                            <div className={styles.checklistComposer}>
+                              <input
+                                value={drafts[block.id] ?? ""}
+                                placeholder="Adicionar tarefa..."
+                                onChange={(event) =>
+                                  setDrafts((current) => ({
+                                    ...current,
+                                    [block.id]: event.target.value,
+                                  }))
+                                }
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    addTask(block.id);
+                                  }
+                                }}
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => addTask(block.id)}
+                              >
+                                Adicionar
+                              </button>
+                            </div>
+
+                            <p className={styles.sourceNote}>
+                              Estas tarefas também aparecem na etapa
+                              “Cerimônia” do checklist geral.
+                            </p>
+                          </section>
+                        </div>
+
+                        <footer className={styles.blockActions}>
+                          <div>
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveDirection(block.id, -1)}
+                            >
+                              ↑
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={index === blocks.length - 1}
+                              onClick={() => moveDirection(block.id, 1)}
+                            >
+                              ↓
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => duplicateBlock(block.id)}
+                          >
+                            Duplicar
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openEditBlock(block)}
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => removeBlock(block)}
+                          >
+                            Excluir
+                          </button>
+                        </footer>
+                      </div>
+                    )}
                   </div>
                 </article>
               );

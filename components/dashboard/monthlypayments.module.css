@@ -547,6 +547,20 @@
     rgba(178, 122, 103, 0.14);
 }
 
+.paymentAmount > small {
+  margin-top: 3px;
+
+  color: rgba(113, 108, 101, 0.76);
+  font-size: 7px;
+}
+
+.statusPartial {
+  color: #4a5c77;
+
+  background:
+    rgba(174, 190, 213, 0.2);
+}
+
 .statementFooter {
   display: flex;
   align-items: center;

@@ -1,44 +1,43 @@
-"use client";
-
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
 import styles from "./monthlypayments.module.css";
 
 export type MonthlyPaymentItem = {
-  id: number;
+  id: string;
 
   title: string;
-  supplier: string;
+  service: string;
   category: string;
 
   amount: number;
-  dueDay: number;
+  paidAmount: number;
+  dueDate: string;
 
-  monthOffset: 0 | 1;
-  status: "paid" | "pending";
+  status:
+    | "paid"
+    | "partially_paid"
+    | "pending";
 };
 
 type MonthlyPaymentsProps = {
   items: MonthlyPaymentItem[];
+  referenceDate: string;
 };
 
 type DisplayStatus =
   | "paid"
+  | "partial"
   | "pending"
   | "overdue";
 
 type PreparedPayment =
   MonthlyPaymentItem & {
-    dueDate: Date;
-    displayStatus: DisplayStatus;
+    displayStatus:
+      DisplayStatus;
+
+    remainingAmount: number;
   };
 
 type PaymentStatement = {
-  monthOffset: 0 | 1;
+  monthKey: string;
   monthLabel: string;
   shortLabel: string;
 
@@ -55,6 +54,7 @@ const statusLabels: Record<
   string
 > = {
   paid: "Pago",
+  partial: "Parcial",
   pending: "A pagar",
   overdue: "Vencido",
 };
@@ -64,58 +64,89 @@ const statusClasses: Record<
   string
 > = {
   paid: styles.statusPaid,
+  partial: styles.statusPartial,
   pending: styles.statusPending,
   overdue: styles.statusOverdue,
 };
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+function formatCurrency(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "pt-BR",
+    {
+      style: "currency",
+      currency: "BRL",
+    },
+  ).format(value);
 }
 
-function getMonthDate(
-  referenceDate: Date,
-  monthOffset: number,
+function parseDateOnly(
+  value: string,
 ) {
+  const [
+    year,
+    month,
+    day,
+  ] = value
+    .split("-")
+    .map(Number);
+
   return new Date(
-    referenceDate.getFullYear(),
-    referenceDate.getMonth() +
-      monthOffset,
-    1,
+    year,
+    month - 1,
+    day,
   );
 }
 
-function getDueDate(
-  referenceDate: Date,
-  monthOffset: number,
-  dueDay: number,
+function dateToIso(
+  value: Date,
 ) {
-  const monthDate = getMonthDate(
-    referenceDate,
-    monthOffset,
+  return [
+    value.getFullYear(),
+    String(
+      value.getMonth() + 1,
+    ).padStart(2, "0"),
+    String(
+      value.getDate(),
+    ).padStart(2, "0"),
+  ].join("-");
+}
+
+function addMonths(
+  value: string,
+  amount: number,
+) {
+  const date =
+    parseDateOnly(
+      `${value.slice(0, 7)}-01`,
+    );
+
+  date.setMonth(
+    date.getMonth() + amount,
   );
 
-  const lastDay = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth() + 1,
+  return dateToIso(date).slice(
     0,
-  ).getDate();
-
-  return new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth(),
-    Math.min(dueDay, lastDay),
+    7,
   );
 }
 
-function formatMonth(date: Date) {
+function formatMonth(
+  monthKey: string,
+) {
   const label =
-    new Intl.DateTimeFormat("pt-BR", {
-      month: "long",
-      year: "numeric",
-    }).format(date);
+    new Intl.DateTimeFormat(
+      "pt-BR",
+      {
+        month: "long",
+        year: "numeric",
+      },
+    ).format(
+      parseDateOnly(
+        `${monthKey}-01`,
+      ),
+    );
 
   return (
     label.charAt(0).toUpperCase() +
@@ -123,7 +154,9 @@ function formatMonth(date: Date) {
   );
 }
 
-function formatDueDate(date: Date) {
+function formatDueDate(
+  value: string,
+) {
   return new Intl.DateTimeFormat(
     "pt-BR",
     {
@@ -131,30 +164,43 @@ function formatDueDate(date: Date) {
       month: "short",
     },
   )
-    .format(date)
+    .format(
+      parseDateOnly(value),
+    )
     .replace(".", "");
 }
 
 function getDisplayStatus(
   item: MonthlyPaymentItem,
-  dueDate: Date,
-  today: Date,
+  referenceDate: string,
 ): DisplayStatus {
-  if (item.status === "paid") {
+  const remaining =
+    Math.max(
+      0,
+      item.amount -
+        item.paidAmount,
+    );
+
+  if (
+    item.status === "paid" ||
+    remaining === 0
+  ) {
     return "paid";
   }
 
-  const todayAtMidnight = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-
   if (
-    item.monthOffset === 0 &&
-    dueDate < todayAtMidnight
+    item.dueDate <
+    referenceDate
   ) {
     return "overdue";
+  }
+
+  if (
+    item.status ===
+      "partially_paid" ||
+    item.paidAmount > 0
+  ) {
+    return "partial";
   }
 
   return "pending";
@@ -162,57 +208,75 @@ function getDisplayStatus(
 
 export default function MonthlyPayments({
   items,
+  referenceDate,
 }: MonthlyPaymentsProps) {
-  const [today, setToday] =
-    useState<Date | null>(null);
+  const currentMonth =
+    referenceDate.slice(0, 7);
 
-  useEffect(() => {
-    setToday(new Date());
-  }, []);
+  const nextMonth =
+    addMonths(
+      referenceDate,
+      1,
+    );
 
-  const statements = useMemo<
-    PaymentStatement[]
-  >(() => {
-    if (!today) {
-      return [];
-    }
+  const statements:
+    PaymentStatement[] =
+    [
+      {
+        monthKey:
+          currentMonth,
 
-    return ([0, 1] as const).map(
-      (monthOffset) => {
-        const monthDate = getMonthDate(
-          today,
-          monthOffset,
-        );
+        shortLabel:
+          "Fatura atual",
+      },
 
-        const statementItems = items
-          .filter(
-            (item) =>
-              item.monthOffset ===
-              monthOffset,
-          )
-          .map((item) => {
-            const dueDate = getDueDate(
-              today,
-              monthOffset,
-              item.dueDay,
-            );
+      {
+        monthKey:
+          nextMonth,
 
-            return {
-              ...item,
-              dueDate,
-              displayStatus:
-                getDisplayStatus(
-                  item,
-                  dueDate,
-                  today,
+        shortLabel:
+          "Próxima fatura",
+      },
+    ].map(
+      ({
+        monthKey,
+        shortLabel,
+      }) => {
+        const statementItems =
+          items
+            .filter(
+              (item) =>
+                item.dueDate.slice(
+                  0,
+                  7,
+                ) === monthKey,
+            )
+            .map(
+              (
+                item,
+              ): PreparedPayment => ({
+                ...item,
+
+                displayStatus:
+                  getDisplayStatus(
+                    item,
+                    referenceDate,
+                  ),
+
+                remainingAmount:
+                  Math.max(
+                    0,
+                    item.amount -
+                      item.paidAmount,
+                  ),
+              }),
+            )
+            .sort(
+              (first, second) =>
+                first.dueDate.localeCompare(
+                  second.dueDate,
                 ),
-            };
-          })
-          .sort(
-            (first, second) =>
-              first.dueDate.getTime() -
-              second.dueDate.getTime(),
-          );
+            );
 
         const total =
           statementItems.reduce(
@@ -222,40 +286,44 @@ export default function MonthlyPayments({
           );
 
         const paid =
-          statementItems
-            .filter(
-              (item) =>
-                item.displayStatus ===
-                "paid",
-            )
-            .reduce(
-              (sum, item) =>
-                sum + item.amount,
-              0,
-            );
+          statementItems.reduce(
+            (sum, item) =>
+              sum +
+              Math.min(
+                item.amount,
+                Math.max(
+                  0,
+                  item.paidAmount,
+                ),
+              ),
+            0,
+          );
 
         const remaining =
-          total - paid;
+          Math.max(
+            0,
+            total - paid,
+          );
 
         const percentage =
           total > 0
             ? Math.round(
-                (paid / total) * 100,
+                (
+                  paid /
+                  total
+                ) * 100,
               )
             : 0;
 
         return {
-          monthOffset,
+          monthKey,
           monthLabel:
-            formatMonth(monthDate),
-
-          shortLabel:
-            monthOffset === 0
-              ? "Fatura atual"
-              : "Próxima fatura",
-
-          items: statementItems,
-
+            formatMonth(
+              monthKey,
+            ),
+          shortLabel,
+          items:
+            statementItems,
           total,
           paid,
           remaining,
@@ -263,27 +331,14 @@ export default function MonthlyPayments({
         };
       },
     );
-  }, [items, today]);
 
   const nextTwoMonthsRemaining =
     statements.reduce(
       (total, statement) =>
-        total + statement.remaining,
+        total +
+        statement.remaining,
       0,
     );
-
-  if (!today) {
-    return (
-      <section
-        className={styles.section}
-        aria-label="Pagamentos mensais"
-      >
-        <div className={styles.loading}>
-          Carregando pagamentos...
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section
@@ -294,18 +349,20 @@ export default function MonthlyPayments({
         className={styles.sectionHeader}
       >
         <div>
-          <span className={styles.eyebrow}>
+          <span
+            className={styles.eyebrow}
+          >
             Planejamento financeiro
           </span>
 
           <h2 id="monthly-payments-title">
-            Faturas dos próximos meses
+            Contas dos próximos meses
           </h2>
 
           <p>
-            Visualize rapidamente as parcelas
-            previstas para o mês atual e para
-            o próximo mês.
+            Valores cadastrados no
+            orçamento com vencimento no
+            mês atual e no próximo mês.
           </p>
         </div>
 
@@ -323,8 +380,8 @@ export default function MonthlyPayments({
           </strong>
 
           <small>
-            Considerando os próximos dois
-            meses
+            Considerando os próximos
+            dois meses
           </small>
         </div>
       </header>
@@ -332,250 +389,301 @@ export default function MonthlyPayments({
       <div
         className={styles.statementGrid}
       >
-        {statements.map((statement) => (
-          <article
-            key={statement.monthOffset}
-            className={`${styles.statementCard} ${
-              statement.monthOffset === 0
-                ? styles.currentStatement
-                : ""
-            }`}
-          >
-            <header
-              className={
-                styles.statementHeader
+        {statements.map(
+          (statement, index) => (
+            <article
+              key={
+                statement.monthKey
               }
+              className={`${styles.statementCard} ${
+                index === 0
+                  ? styles.currentStatement
+                  : ""
+              }`}
             >
-              <div>
-                <span
-                  className={
-                    styles.statementType
-                  }
-                >
-                  {statement.shortLabel}
-                </span>
-
-                <h3>
-                  {statement.monthLabel}
-                </h3>
-              </div>
-
-              <div
+              <header
                 className={
-                  styles.statementTotal
+                  styles.statementHeader
                 }
               >
-                <span>Valor previsto</span>
+                <div>
+                  <span
+                    className={
+                      styles.statementType
+                    }
+                  >
+                    {
+                      statement.shortLabel
+                    }
+                  </span>
 
-                <strong>
-                  {formatCurrency(
-                    statement.total,
-                  )}
-                </strong>
-              </div>
-            </header>
+                  <h3>
+                    {
+                      statement.monthLabel
+                    }
+                  </h3>
+                </div>
 
-            <div
-              className={
-                styles.paymentProgress
-              }
-            >
+                <div
+                  className={
+                    styles.statementTotal
+                  }
+                >
+                  <span>
+                    Total das contas
+                  </span>
+
+                  <strong>
+                    {formatCurrency(
+                      statement.total,
+                    )}
+                  </strong>
+                </div>
+              </header>
+
               <div
                 className={
-                  styles.progressHeader
+                  styles.paymentProgress
+                }
+              >
+                <div
+                  className={
+                    styles.progressHeader
+                  }
+                >
+                  <span>
+                    {formatCurrency(
+                      statement.paid,
+                    )}
+                    {" "}
+                    pagos
+                  </span>
+
+                  <strong>
+                    {
+                      statement.percentage
+                    }
+                    %
+                  </strong>
+                </div>
+
+                <div
+                  className={
+                    styles.progressTrack
+                  }
+                >
+                  <span
+                    className={
+                      styles.progressFill
+                    }
+                    style={{
+                      width:
+                        `${statement.percentage}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                className={
+                  styles.statementSummary
+                }
+              >
+                <div>
+                  <span>Pago</span>
+
+                  <strong>
+                    {formatCurrency(
+                      statement.paid,
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>A pagar</span>
+
+                  <strong>
+                    {formatCurrency(
+                      statement.remaining,
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Contas</span>
+
+                  <strong>
+                    {
+                      statement.items
+                        .length
+                    }
+                  </strong>
+                </div>
+              </div>
+
+              {statement.items.length >
+              0 ? (
+                <div
+                  className={
+                    styles.paymentList
+                  }
+                >
+                  {statement.items.map(
+                    (item) => (
+                      <article
+                        key={item.id}
+                        className={
+                          styles.paymentItem
+                        }
+                      >
+                        <div
+                          className={
+                            styles.dueDate
+                          }
+                        >
+                          <strong>
+                            {item.dueDate.slice(
+                              8,
+                              10,
+                            )}
+                          </strong>
+
+                          <span>
+                            {new Intl.DateTimeFormat(
+                              "pt-BR",
+                              {
+                                month:
+                                  "short",
+                              },
+                            )
+                              .format(
+                                parseDateOnly(
+                                  item.dueDate,
+                                ),
+                              )
+                              .replace(
+                                ".",
+                                "",
+                              )}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.paymentIdentity
+                          }
+                        >
+                          <strong>
+                            {
+                              item.title
+                            }
+                          </strong>
+
+                          <span>
+                            {
+                              item.service
+                            }
+                          </span>
+
+                          <small>
+                            {
+                              item.category
+                            }
+                            {" · Vence "}
+                            {formatDueDate(
+                              item.dueDate,
+                            )}
+                          </small>
+                        </div>
+
+                        <div
+                          className={
+                            styles.paymentAmount
+                          }
+                        >
+                          <strong>
+                            {formatCurrency(
+                              item.remainingAmount >
+                                0
+                                ? item.remainingAmount
+                                : item.amount,
+                            )}
+                          </strong>
+
+                          {item.displayStatus ===
+                            "partial" && (
+                            <small>
+                              de
+                              {" "}
+                              {formatCurrency(
+                                item.amount,
+                              )}
+                            </small>
+                          )}
+
+                          <span
+                            className={`${styles.statusBadge} ${
+                              statusClasses[
+                                item
+                                  .displayStatus
+                              ]
+                            }`}
+                          >
+                            {
+                              statusLabels[
+                                item
+                                  .displayStatus
+                              ]
+                            }
+                          </span>
+                        </div>
+                      </article>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <div
+                  className={
+                    styles.empty
+                  }
+                >
+                  <span
+                    aria-hidden="true"
+                  >
+                    ✓
+                  </span>
+
+                  <strong>
+                    Nenhuma conta
+                    prevista
+                  </strong>
+
+                  <p>
+                    Não existem parcelas
+                    cadastradas para este
+                    mês.
+                  </p>
+                </div>
+              )}
+
+              <footer
+                className={
+                  styles.statementFooter
                 }
               >
                 <span>
-                  {formatCurrency(
-                    statement.paid,
-                  )}{" "}
-                  pagos
+                  Saldo do mês
                 </span>
-
-                <strong>
-                  {statement.percentage}%
-                </strong>
-              </div>
-
-              <div
-                className={
-                  styles.progressTrack
-                }
-              >
-                <span
-                  className={
-                    styles.progressFill
-                  }
-                  style={{
-                    width: `${statement.percentage}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div
-              className={
-                styles.statementSummary
-              }
-            >
-              <div>
-                <span>Pago</span>
-
-                <strong>
-                  {formatCurrency(
-                    statement.paid,
-                  )}
-                </strong>
-              </div>
-
-              <div>
-                <span>A pagar</span>
 
                 <strong>
                   {formatCurrency(
                     statement.remaining,
                   )}
                 </strong>
-              </div>
-
-              <div>
-                <span>Parcelas</span>
-
-                <strong>
-                  {statement.items.length}
-                </strong>
-              </div>
-            </div>
-
-            {statement.items.length > 0 ? (
-              <div
-                className={
-                  styles.paymentList
-                }
-              >
-                {statement.items.map(
-                  (item) => (
-                    <article
-                      key={item.id}
-                      className={
-                        styles.paymentItem
-                      }
-                    >
-                      <div
-                        className={
-                          styles.dueDate
-                        }
-                      >
-                        <strong>
-                          {String(
-                            item.dueDate.getDate(),
-                          ).padStart(2, "0")}
-                        </strong>
-
-                        <span>
-                          {new Intl.DateTimeFormat(
-                            "pt-BR",
-                            {
-                              month:
-                                "short",
-                            },
-                          )
-                            .format(
-                              item.dueDate,
-                            )
-                            .replace(
-                              ".",
-                              "",
-                            )}
-                        </span>
-                      </div>
-
-                      <div
-                        className={
-                          styles.paymentIdentity
-                        }
-                      >
-                        <strong>
-                          {item.title}
-                        </strong>
-
-                        <span>
-                          {item.supplier}
-                        </span>
-
-                        <small>
-                          {item.category} · Vence{" "}
-                          {formatDueDate(
-                            item.dueDate,
-                          )}
-                        </small>
-                      </div>
-
-                      <div
-                        className={
-                          styles.paymentAmount
-                        }
-                      >
-                        <strong>
-                          {formatCurrency(
-                            item.amount,
-                          )}
-                        </strong>
-
-                        <span
-                          className={`${styles.statusBadge} ${
-                            statusClasses[
-                              item
-                                .displayStatus
-                            ]
-                          }`}
-                        >
-                          {
-                            statusLabels[
-                              item
-                                .displayStatus
-                            ]
-                          }
-                        </span>
-                      </div>
-                    </article>
-                  ),
-                )}
-              </div>
-            ) : (
-              <div className={styles.empty}>
-                <span aria-hidden="true">
-                  ✓
-                </span>
-
-                <strong>
-                  Nenhum pagamento previsto
-                </strong>
-
-                <p>
-                  Não existem parcelas
-                  cadastradas para este mês.
-                </p>
-              </div>
-            )}
-
-            <footer
-              className={
-                styles.statementFooter
-              }
-            >
-              <span>
-                Saldo da fatura
-              </span>
-
-              <strong>
-                {formatCurrency(
-                  statement.remaining,
-                )}
-              </strong>
-            </footer>
-          </article>
-        ))}
+              </footer>
+            </article>
+          ),
+        )}
       </div>
     </section>
   );

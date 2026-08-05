@@ -1,0 +1,377 @@
+.section {
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  display: block;
+
+  color: #747a59;
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  margin: 6px 0 0;
+
+  color: #302b27;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 400;
+}
+
+.header p {
+  max-width: 420px;
+  margin: 0;
+
+  color: #716c65;
+
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: right;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 12px;
+}
+
+.card {
+  display: grid;
+  gap: 15px;
+
+  min-height: 235px;
+  padding: 18px;
+
+  background: #fffdf9;
+  border: 1px solid #e2ddd4;
+  border-radius: 14px 21px 14px 21px;
+
+  box-shadow: 0 9px 28px rgba(37, 47, 73, 0.05);
+}
+
+.card > header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+
+  width: 37px;
+  height: 37px;
+
+  color: #404d77;
+  background: #dce7ef;
+
+  border-radius: 9px 14px 9px 14px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+
+.card > header > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card > header span {
+  color: #747a59;
+
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.card h3 {
+  margin: 3px 0 0;
+
+  color: #302b27;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.card > header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: #404d77;
+
+  font-size: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.card > header a:hover {
+  color: #2f3a5d;
+}
+
+.highlight {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-height: 72px;
+  padding: 11px;
+
+  background: #f7f5ef;
+  border: 1px solid #e2ddd4;
+  border-radius: 9px 14px 9px 14px;
+}
+
+.highlight time {
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  min-height: 49px;
+  flex: 0 0 auto;
+
+  color: #fff;
+  background: #404d77;
+
+  border-radius: 9px 13px 9px 13px;
+}
+
+.highlight time strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.highlight time small {
+  margin-top: 3px;
+
+  color: #cddfe9;
+
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.highlight > div:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.highlight > div:last-child strong {
+  overflow: hidden;
+
+  color: #302b27;
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.highlight > div:last-child span {
+  margin-top: 4px;
+
+  color: #716c65;
+  font-size: 7px;
+}
+
+.privateSymbol {
+  display: grid;
+  place-items: center;
+
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+
+  color: #74566f;
+  background: rgba(208, 176, 202, 0.22);
+
+  border-radius: 50%;
+
+  font-size: 16px;
+}
+
+.mainValue {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  padding: 11px 0;
+}
+
+.mainValue strong {
+  color: #404d77;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.mainValue span {
+  color: #716c65;
+  font-size: 8px;
+}
+
+.progress {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+
+  background: #eeebe4;
+  border-radius: 999px;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #aebed5,
+      #92966f
+    );
+
+  border-radius: inherit;
+}
+
+.card > footer {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+  gap: 7px;
+
+  margin-top: auto;
+}
+
+.card > footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+  padding: 9px;
+
+  background: #f7f5ef;
+  border: 1px solid #e5e0d7;
+  border-radius: 8px 12px 8px 12px;
+}
+
+.card > footer strong {
+  color: #404d77;
+  font-size: 11px;
+}
+
+.card > footer span {
+  overflow: hidden;
+
+  color: #716c65;
+  font-size: 7px;
+  line-height: 1.35;
+
+  text-overflow: ellipsis;
+}
+
+.card > footer .danger {
+  background: rgba(204, 146, 140, 0.09);
+  border-color: rgba(159, 91, 85, 0.2);
+}
+
+.card > footer .danger strong {
+  color: #8a514e;
+}
+
+.card > footer .warning {
+  background: rgba(255, 239, 195, 0.34);
+  border-color: rgba(180, 147, 68, 0.18);
+}
+
+.card > footer .warning strong {
+  color: #826a32;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+
+  min-height: 72px;
+  margin: 0;
+  padding: 12px;
+
+  color: #716c65;
+  background: #f7f5ef;
+
+  border: 1px dashed #d8d2c8;
+  border-radius: 9px 14px 9px 14px;
+
+  font-size: 8px;
+  text-align: center;
+}
+
+.timelineCard .icon {
+  color: #4a5c77;
+  background: rgba(174, 190, 213, 0.24);
+}
+
+.seatingCard .icon {
+  color: #4e6448;
+  background: rgba(146, 150, 111, 0.18);
+}
+
+.ceremonyCard .icon {
+  color: #8a514e;
+  background: rgba(204, 146, 140, 0.12);
+}
+
+.dressCard .icon {
+  color: #74566f;
+  background: rgba(208, 176, 202, 0.22);
+}
+
+@media (max-width: 900px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header p {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .card > footer {
+    grid-template-columns: 1fr;
+  }
+}
