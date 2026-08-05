@@ -244,6 +244,133 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          category: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          event_date: string
+          id: string
+          location: string | null
+          priority: string
+          responsible_name: string | null
+          responsible_type: string
+          start_time: string | null
+          status: string
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          id?: string
+          location?: string | null
+          priority?: string
+          responsible_name?: string | null
+          responsible_type?: string
+          start_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          all_day?: boolean
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          id?: string
+          location?: string | null
+          priority?: string
+          responsible_name?: string | null
+          responsible_type?: string
+          start_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ceremony_blocks: {
+        Row: {
+          block_type: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          instructions: string | null
+          participants: string | null
+          responsible: string | null
+          sort_order: number
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          block_type?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          instructions?: string | null
+          participants?: string | null
+          responsible?: string | null
+          sort_order?: number
+          start_time?: string
+          status?: string
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          block_type?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          instructions?: string | null
+          participants?: string | null
+          responsible?: string | null
+          sort_order?: number
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ceremony_blocks_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_groups: {
         Row: {
           created_at: string
