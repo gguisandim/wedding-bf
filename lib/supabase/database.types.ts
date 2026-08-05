@@ -244,6 +244,119 @@ export type Database = {
           },
         ]
       }
+      checklist_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          tone: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          tone?: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          tone?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_groups_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          group_id: string
+          id: string
+          priority: string
+          responsible_name: string | null
+          responsible_type: string
+          sort_order: number
+          source_id: string | null
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          group_id: string
+          id?: string
+          priority?: string
+          responsible_name?: string | null
+          responsible_type?: string
+          sort_order?: number
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          group_id?: string
+          id?: string
+          priority?: string
+          responsible_name?: string | null
+          responsible_type?: string
+          sort_order?: number
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_tasks_group_fk"
+            columns: ["group_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_groups"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "checklist_tasks_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convidados: {
         Row: {
           atualizado_em: string
