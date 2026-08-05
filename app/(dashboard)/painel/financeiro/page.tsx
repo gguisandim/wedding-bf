@@ -1,167 +1,140 @@
 import BudgetManager, {
-  type BudgetCategory,
-  type BudgetExpense,
+  type BudgetItem,
+  type BudgetSupplier,
 } from "@/components/dashboard/financeiro/budget-manager";
 
-const categories: BudgetCategory[] = [
-  {
-    key: "venue",
-    label: "Espaço",
-    limit: 12000,
-  },
-  {
-    key: "buffet",
-    label: "Buffet",
-    limit: 15000,
-  },
-  {
-    key: "decor",
-    label: "Decoração",
-    limit: 7000,
-  },
-  {
-    key: "photo",
-    label: "Foto e vídeo",
-    limit: 5000,
-  },
-  {
-    key: "music",
-    label: "Música",
-    limit: 3000,
-  },
-  {
-    key: "attire",
-    label: "Trajes",
-    limit: 4000,
-  },
-  {
-    key: "stationery",
-    label: "Convites e papelaria",
-    limit: 1500,
-  },
-  {
-    key: "other",
-    label: "Outros",
-    limit: 2500,
-  },
-];
+import { requireCurrentWedding } from "@/lib/auth/get-current-wedding";
+import { getBudgetManagementData } from "@/lib/data/budget";
 
-const expenses: BudgetExpense[] = [
-  {
-    id: "expense-01",
-    description:
-      "Locação do espaço",
-    supplier:
-      "Solar do Bosque",
-    category: "venue",
+export default async function FinancePage() {
+  const wedding =
+    await requireCurrentWedding();
 
-    totalAmount: 9500,
-    paidAmount: 9500,
+  const {
+    suppliers,
+    items,
+    installments,
+  } =
+    await getBudgetManagementData(
+      wedding.id,
+    );
 
-    status: "paid",
+  const installmentsByItem =
+    new Map<
+      string,
+      typeof installments
+    >();
 
-    dueDate: "2026-08-15",
-    notes:
-      "Contrato e caução quitados.",
-  },
-  {
-    id: "expense-02",
-    description:
-      "Serviço de buffet",
-    supplier:
-      "Sabores da Amazônia",
-    category: "buffet",
+  for (const installment of installments) {
+    const current =
+      installmentsByItem.get(
+        installment.budget_item_id,
+      ) ?? [];
 
-    totalAmount: 12000,
-    paidAmount: 5000,
+    current.push(installment);
 
-    status: "partial",
+    installmentsByItem.set(
+      installment.budget_item_id,
+      current,
+    );
+  }
 
-    dueDate: "2027-06-18",
-    notes:
-      "Saldo final até 30 dias antes do evento.",
-  },
-  {
-    id: "expense-03",
-    description:
-      "Fotografia e filmagem",
-    supplier:
-      "Memórias Filmes",
-    category: "photo",
+  const supplierNameById =
+    new Map(
+      suppliers.map((supplier) => [
+        supplier.id,
+        supplier.name,
+      ]),
+    );
 
-    totalAmount: 4500,
-    paidAmount: 2250,
+  const budgetItems:
+    BudgetItem[] =
+    items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
 
-    status: "partial",
+      plannedAmount:
+        item.planned_amount,
 
-    dueDate: "2027-07-10",
-  },
-  {
-    id: "expense-04",
-    description:
-      "Decoração da cerimônia",
-    supplier:
-      "Folha & Flor",
-    category: "decor",
+      contractedAmount:
+        item.contracted_amount,
 
-    totalAmount: 4950,
-    paidAmount: 2000,
+      status:
+        item.status as
+          BudgetItem["status"],
 
-    status: "partial",
+      supplierId:
+        item.supplier_id ??
+        undefined,
 
-    dueDate: "2027-06-30",
-  },
-  {
-    id: "expense-05",
-    description:
-      "DJ e sonorização",
-    supplier:
-      "Som Norte Eventos",
-    category: "music",
+      supplierName:
+        item.supplier_id
+          ? supplierNameById.get(
+              item.supplier_id,
+            )
+          : undefined,
 
-    totalAmount: 2800,
-    paidAmount: 0,
+      notes:
+        item.notes ??
+        undefined,
 
-    status: "estimate",
+      installments:
+        (
+          installmentsByItem.get(
+            item.id,
+          ) ?? []
+        ).map(
+          (installment) => ({
+            id: installment.id,
 
-    dueDate: "2027-05-15",
-  },
-  {
-    id: "expense-06",
-    description:
-      "Vestido e traje",
-    supplier:
-      "A definir",
-    category: "attire",
+            description:
+              installment.description,
 
-    totalAmount: 3500,
-    paidAmount: 0,
+            installmentNumber:
+              installment.installment_number,
 
-    status: "estimate",
-  },
-  {
-    id: "expense-07",
-    description:
-      "Convites impressos",
-    supplier:
-      "Papelaria Aurora",
-    category: "stationery",
+            amount:
+              installment.amount,
 
-    totalAmount: 1200,
-    paidAmount: 0,
+            dueDate:
+              installment.due_date,
 
-    status: "estimate",
+            paidAmount:
+              installment.paid_amount,
 
-    dueDate: "2027-02-20",
-  },
-];
+            paidAt:
+              installment.paid_at ??
+              undefined,
 
-export default function FinancialPage() {
+            paymentMethod:
+              installment.payment_method ??
+              undefined,
+
+            status:
+              installment.status as
+                BudgetItem["installments"][number]["status"],
+
+            notes:
+              installment.notes ??
+              undefined,
+          }),
+        ),
+    }));
+
+  const budgetSuppliers:
+    BudgetSupplier[] =
+    suppliers.map((supplier) => ({
+      id: supplier.id,
+      name: supplier.name,
+    }));
+
   return (
     <BudgetManager
-      initialBudget={50000}
-      initialCategories={categories}
-      initialExpenses={expenses}
+      initialItems={budgetItems}
+      initialSuppliers={
+        budgetSuppliers
+      }
     />
   );
 }

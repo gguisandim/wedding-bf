@@ -37,7 +37,7 @@ type SidebarProps = {
   onCollapse: () => void;
 };
 
-const menuGroups: MenuGroup[] = [
+const publicMenuGroups: MenuGroup[] = [
   {
     label: "Planejamento",
     items: [
@@ -90,15 +90,6 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: "Serviços",
-    items: [
-      {
-        label: "Fornecedores",
-        href: "/painel/fornecedores",
-      },
-    ],
-  },
-  {
     label: "Evento",
     items: [
       {
@@ -112,6 +103,16 @@ const menuGroups: MenuGroup[] = [
     ],
   },
 ];
+
+const privateBrideGroup: MenuGroup = {
+  label: "Privado",
+  items: [
+    {
+      label: "Vestido da noiva",
+      href: "/painel/fornecedores",
+    },
+  ],
+};
 
 const memberTypeLabels: Record<
   WeddingMemberType,
@@ -132,6 +133,15 @@ const roleLabels: Record<
   admin: "Administrador",
   viewer: "Visualização",
 };
+
+function canAccessBridePrivateArea(
+  memberType: WeddingMemberType,
+): boolean {
+  return (
+    memberType === "bride" ||
+    memberType === "developer"
+  );
+}
 
 function getMemberName(
   wedding: SidebarWedding,
@@ -168,6 +178,16 @@ export default function Sidebar({
 
   const memberInitial =
     getMemberInitial(wedding);
+
+  const menuGroups =
+    canAccessBridePrivateArea(
+      wedding.memberType,
+    )
+      ? [
+          ...publicMenuGroups,
+          privateBrideGroup,
+        ]
+      : publicMenuGroups;
 
   function isActive(href: string) {
     if (href === "/painel") {

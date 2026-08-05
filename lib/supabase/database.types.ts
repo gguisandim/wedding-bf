@@ -14,6 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
+      bridal_dress_appointments: {
+        Row: {
+          appointment_at: string
+          completed: boolean
+          created_at: string
+          dress_option_id: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          appointment_at: string
+          completed?: boolean
+          created_at?: string
+          dress_option_id?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          appointment_at?: string
+          completed?: boolean
+          created_at?: string
+          dress_option_id?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridal_dress_appointments_option_fk"
+            columns: ["dress_option_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "bridal_dress_options"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "bridal_dress_appointments_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bridal_dress_options: {
+        Row: {
+          atelier_name: string | null
+          created_at: string
+          estimated_amount: number
+          final_amount: number | null
+          id: string
+          image_url: string | null
+          is_favorite: boolean
+          notes: string | null
+          status: string
+          title: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          atelier_name?: string | null
+          created_at?: string
+          estimated_amount?: number
+          final_amount?: number | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean
+          notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          atelier_name?: string | null
+          created_at?: string
+          estimated_amount?: number
+          final_amount?: number | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean
+          notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridal_dress_options_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_installments: {
+        Row: {
+          amount: number
+          budget_item_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          installment_number: number
+          notes: string | null
+          paid_amount: number
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          amount: number
+          budget_item_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          amount?: number
+          budget_item_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_installments_item_fk"
+            columns: ["budget_item_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "budget_installments_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_items: {
+        Row: {
+          category: string
+          contracted_amount: number
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          planned_amount: number
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          wedding_id: string
+        }
+        Insert: {
+          category: string
+          contracted_amount?: number
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          planned_amount?: number
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          wedding_id: string
+        }
+        Update: {
+          category?: string
+          contracted_amount?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          planned_amount?: number
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convidados: {
         Row: {
           atualizado_em: string
@@ -255,6 +485,54 @@ export type Database = {
           },
         ]
       }
+      payment_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          installment_id: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          installment_id: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          installment_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_attachments_installment_fk"
+            columns: ["installment_id", "wedding_id"]
+            isOneToOne: false
+            referencedRelation: "budget_installments"
+            referencedColumns: ["id", "wedding_id"]
+          },
+          {
+            foreignKeyName: "payment_attachments_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seating_tables: {
         Row: {
           capacity: number
@@ -301,6 +579,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "seating_tables_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          service_category: string | null
+          status: string
+          updated_at: string
+          website: string | null
+          wedding_id: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          service_category?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          wedding_id: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          service_category?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
